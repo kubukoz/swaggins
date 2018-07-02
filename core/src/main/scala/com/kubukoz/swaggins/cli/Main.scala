@@ -2,13 +2,16 @@ package com.kubukoz.swaggins.cli
 
 import java.nio.file.{Files, Path}
 
+import enumeratum._
 import cats.data.ValidatedNel
 import cats.implicits._
 import com.kubukoz.swaggins.cli.Spec.Paths
 import com.monovore.decline._
-import io.circe.Decoder
+import io.circe.{Decoder, KeyDecoder}
 import io.circe.generic.JsonCodec
 import io.circe.yaml.parser
+
+import scala.collection.immutable
 
 object Main
     extends CommandApp(
@@ -51,17 +54,28 @@ object Spec {
   case class Paths(paths: List[Path])
 
   object Paths {
-    implicit val decoder: Decoder[Paths] = for {
-      obj <- Decoder.decodeJsonObject
-      paths = obj.toMap.mapValues(_.as[PathBody]).map { case (k, vRes) => vRes.map(Path(k, _)) }.toList
-      result <- Decoder.instance { _ =>
-        paths.sequence[Decoder.Result, Path].map(Paths(_))
+    implicit val decoder: Decoder[Paths] = Decoder.decodeJsonObject(_).flatMap { obj =>
+      val paths = obj.toMap.mapValues(_.as[Methods]).toList.traverse[Decoder.Result, Path] {
+        case (k, bodyResult) => bodyResult.map(Path(k, _))
       }
-    } yield result
+
+      paths.map(Paths(_))
+    }
   }
 
   @JsonCodec
   case class PathBody()
 
-  case class Path(path: String, body: PathBody)
+  type Methods = Map[HttpMethod, PathBody]
+  case class Path(path: String, methods: Methods)
+
+  sealed trait HttpMethod extends EnumEntry with  Product with Serializable
+  object HttpMethod extends Enum[HttpMethod] {
+    case object Get extends HttpMethod
+    case object Post extends HttpMethod
+
+    override def values: immutable.IndexedSeq[HttpMethod] = findValues
+
+    implicit val decoder: KeyDecoder[HttpMethod] = KeyDecoder.instance(HttpMethod.withNameInsensitiveOption)
+  }
 }
