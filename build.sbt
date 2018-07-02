@@ -30,7 +30,7 @@ val commonSettings = Seq(
   (Test / fork) := true
 ) ++ plugins
 
-def makeDep(project: Project) = project % "compile->compile;test->test;it->it;it->test"
+def makeDep(project: Project) = project % "compile->compile;test->test"
 
 val core = project
   .settings(
@@ -41,6 +41,7 @@ val coreDep = makeDep(core)
 
 val `swaggins-cli` = (project in file("."))
   .settings(
+    mainClass in Compile := Some("com.kubukoz.swaggins.cli.Main"),
     commonSettings
   )
   .dependsOn(coreDep)

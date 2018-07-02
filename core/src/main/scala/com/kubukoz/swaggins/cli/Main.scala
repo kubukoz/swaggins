@@ -34,8 +34,6 @@ object Main
     )
 
 object MainUtils {
-  import io.circe.yaml.syntax._
-
   def validateSpec(path: Path): ValidatedNel[String, Spec] =
     path.valid
       .ensure("spec must be a file.")(_.toFile.exists())
