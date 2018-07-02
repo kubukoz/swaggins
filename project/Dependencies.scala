@@ -35,6 +35,7 @@ object Dependencies {
     "io.circe" %% "circe-core"           % Versions.circe,
     "io.circe" %% "circe-generic-extras" % Versions.circe,
     "io.circe" %% "circe-parser"         % Versions.circe,
+    "io.circe" %% "circe-yaml"           % Versions.circeYaml,
     "io.circe" %% "circe-java8"          % Versions.circe
   )
 
@@ -58,6 +59,7 @@ object Versions {
   val cats                = "1.1.0"
   val catsParTemp         = "0.1.0"
   val circe               = "0.9.3"
+  val circeYaml           = "0.6.1"
   val decline             = "0.4.2"
   val kindProjector       = "0.9.6"
   val pureconfig          = "0.9.1"
