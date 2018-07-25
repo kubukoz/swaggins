@@ -13,7 +13,8 @@ val commonDeps = Seq(
   log4Cats,
   simulacrum,
   scalatest,
-  decline
+  decline,
+  monix
 ) ++ circe ++ monocle ++ scalacheck ++ pureconfig
 
 val plugins = List(
