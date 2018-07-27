@@ -9,7 +9,6 @@ object Dependencies {
   //libraries
   val logback    = "ch.qos.logback"       % "logback-classic" % Versions.logback
   val log4Cats   = "io.chrisdavenport"    %% "log4cats-slf4j" % Versions.log4Cats
-  val fs2        = "co.fs2"               %% "fs2-core"       % Versions.fs2
   val scalatest  = "org.scalatest"        %% "scalatest"      % Versions.scalatest % Test
   val simulacrum = "com.github.mpilquist" %% "simulacrum"     % Versions.simulacrum
   val monix      = "io.monix"             %% "monix"          % Versions.monix
@@ -50,6 +49,12 @@ object Dependencies {
       "io.chrisdavenport" %% "cats-par"     % Versions.catsParTemp,
       "org.typelevel"     %% "cats-laws"    % Versions.cats % Test,
       "org.typelevel"     %% "cats-testkit" % Versions.cats % Test
+    )
+
+  val fs2 =
+    Seq(
+      "co.fs2" %% "fs2-core" % Versions.fs2,
+      "co.fs2" %% "fs2-io"   % Versions.fs2
     )
 }
 

@@ -1,0 +1,13 @@
+paths:
+  /balance:
+    get:
+  /auth/login:
+    post:
+  /register:
+    post:
+  /auth/logout:
+    post:
+  /auth/whomst:
+    get:
+  /auth/token/refresh:
+    post:

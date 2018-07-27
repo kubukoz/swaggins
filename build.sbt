@@ -10,11 +10,10 @@ val commonDeps = Seq(
   logback,
   log4Cats,
   simulacrum,
-  fs2,
   scalatest,
   decline,
   monix
-) ++ circe ++ monocle ++ scalacheck ++ pureconfig
+) ++ circe ++ monocle ++ scalacheck ++ pureconfig ++ fs2
 
 val plugins = List(
   addCompilerPlugin(macroParadise),
