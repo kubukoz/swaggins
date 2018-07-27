@@ -32,25 +32,21 @@ val commonSettings = Seq(
 
 def makeDep(project: Project): ClasspathDependency = project % "compile->compile;test->test"
 
-val openapi = project
-  .settings(
-    commonSettings
-  )
+val openapi = project.settings(
+  commonSettings
+)
 
-val config = project
-  .settings(
-    commonSettings
-  )
+val config = project.settings(
+  commonSettings
+)
 
-val generator = project
-  .settings(
-    commonSettings
-  )
+val generator = project.settings(
+  commonSettings
+)
 
-val fetch = project
-  .settings(
-    commonSettings
-  )
+val fetch = project.settings(
+  commonSettings
+)
 
 val cli = project
   .settings(
