@@ -30,19 +30,39 @@ val commonSettings = Seq(
   (Test / fork) := true
 ) ++ plugins
 
-def makeDep(project: Project) = project % "compile->compile;test->test"
+def makeDep(project: Project): ClasspathDependency = project % "compile->compile;test->test"
 
-val core = project
+val openapi = project
   .settings(
     commonSettings
   )
 
-val coreDep = makeDep(core)
+val config = project
+  .settings(
+    commonSettings
+  )
 
-val `swaggins-cli` = (project in file("."))
+val generator = project
+  .settings(
+    commonSettings
+  )
+
+val fetch = project
+  .settings(
+    commonSettings
+  )
+
+val cli = project
+  .settings(
+    commonSettings
+  )
+  .dependsOn(openapi)
+  .aggregate(openapi)
+
+val `swaggins` = (project in file("."))
   .settings(
     mainClass in Compile := Some("com.kubukoz.swaggins.cli.Main"),
     commonSettings
   )
-  .dependsOn(coreDep)
-  .aggregate(core)
+  .dependsOn(openapi, config, generator, fetch, cli)
+  .aggregate(openapi, config, generator, fetch, cli)
