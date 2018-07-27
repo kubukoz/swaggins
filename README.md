@@ -22,3 +22,5 @@ Roadmap:
 - android (retrofit) client generator
 - ???
 
+## Packaging
+`sbt stage` for getting a raw binary, `sbt universal:packageBin` for zipfile
