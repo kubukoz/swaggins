@@ -44,13 +44,11 @@ val openapi = basic(project)
 
 val config = basic(project)
 
-val generator = basic(project)
-  .dependsOn(openapi)
+val generator = basic(project).dependsOn(openapi, config)
 
-val fetch = basic(project)
+val fetch = basic(project).dependsOn(openapi)
 
-val app = basic(project)
-  .dependsOn(generator, config)
+val app = basic(project).dependsOn(generator, config, fetch)
 
 val cli = basic(project)
 

@@ -11,8 +11,8 @@ class SwagginsConfigParsingTest extends BaseTest {
 
       parser.parse(filePath("/swaggins.json")).value shouldBe SwagginsConfig(
         Map(
-          SpecSource(Some("gh"), "kubukoz") -> (()),
-          SpecSource(None, "kumalg")        -> (())
+          SpecRepository(Some("gh"), "kubukoz") -> (()),
+          SpecRepository(None, "kumalg")        -> (())
         )
       )
     }

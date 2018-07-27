@@ -13,21 +13,21 @@ class SwagginsConfigParser[F[_]: Sync] {
     Parsing.json.parseFile[F, SwagginsConfig](path)
 }
 
-case class SwagginsConfig(sources: Map[SpecSource, Unit]) extends AnyVal
+case class SwagginsConfig(sources: Map[SpecRepository, Unit]) extends AnyVal
 
 object SwagginsConfig {
   implicit val decoder: Decoder[SwagginsConfig] =
     deriveUnwrappedDecoder[SwagginsConfig]
 }
 
-case class SpecSource(key: Option[String], user: String)
+case class SpecRepository(sourceKey: Option[String], user: String)
 
-object SpecSource {
-  implicit val decoder: KeyDecoder[SpecSource] = {
+object SpecRepository {
+  implicit val decoder: KeyDecoder[SpecRepository] = {
     KeyDecoder.instance {
       _.split(":").toList match {
-        case key :: user :: Nil => SpecSource(Some(key), user).some
-        case user :: Nil        => SpecSource(None, user).some
+        case key :: user :: Nil => SpecRepository(Some(key), user).some
+        case user :: Nil        => SpecRepository(None, user).some
         case _                  => none
       }
     }
