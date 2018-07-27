@@ -29,7 +29,8 @@ val commonSettings = Seq(
   (Test / fork) := true
 ) ++ plugins
 
-def makeDep(project: Project): ClasspathDependency = project % "compile->compile;test->test"
+def makeDep(project: Project): ClasspathDependency =
+  project % "compile->compile;test->test"
 
 val openapi = project.settings(
   commonSettings

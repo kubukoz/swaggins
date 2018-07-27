@@ -45,7 +45,8 @@ object HttpMethod extends Enum[HttpMethod] {
   case object Get  extends HttpMethod
   case object Post extends HttpMethod
 
-  implicit val decoder: KeyDecoder[HttpMethod] = KeyDecoder.instance(HttpMethod.withNameInsensitiveOption)
+  implicit val decoder: KeyDecoder[HttpMethod] =
+    KeyDecoder.instance(HttpMethod.withNameInsensitiveOption)
 }
 
 @JsonCodec(decodeOnly = true)

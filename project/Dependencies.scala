@@ -1,10 +1,12 @@
 import sbt._
 
 object Dependencies {
+
   //plugins
-  val macroParadise    = ("org.scalamacros" % "paradise" % Versions.macroParadise).cross(CrossVersion.full)
-  val kindProjector    = "org.spire-math" %% "kind-projector" % Versions.kindProjector
-  val betterMonadicFor = "com.olegpy" %% "better-monadic-for" % Versions.bm4
+  val macroParadise = ("org.scalamacros" % "paradise" % Versions.macroParadise)
+    .cross(CrossVersion.full)
+  val kindProjector    = "org.spire-math" %% "kind-projector"     % Versions.kindProjector
+  val betterMonadicFor = "com.olegpy"     %% "better-monadic-for" % Versions.bm4
 
   //libraries
   val logback    = "ch.qos.logback"       % "logback-classic" % Versions.logback

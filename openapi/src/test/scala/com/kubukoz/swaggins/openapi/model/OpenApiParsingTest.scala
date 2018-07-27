@@ -9,9 +9,9 @@ class OpenApiParsingTest extends WordSpec with Matchers {
 
   "the parser" should {
     "parse the sample spec" in {
-      import OpenApiParser.parse
+      val parser: OpenApiParser[Coeval] = new OpenApiParser[Coeval]
 
-      parse[Coeval](filePath("/parsing-works.yml")).value shouldBe OpenAPI(
+      parser.parse(filePath("/parsing-works.yml")).value shouldBe OpenAPI(
         "3.0.1",
         Info(
           "1.0.0",
@@ -19,12 +19,13 @@ class OpenApiParsingTest extends WordSpec with Matchers {
         ),
         Paths(
           Set(
-            Path("/balance", PathItem(Map(HttpMethod.Get             -> Operation()))),
-            Path("/auth/login", PathItem(Map(HttpMethod.Post         -> Operation()))),
-            Path("/register", PathItem(Map(HttpMethod.Post           -> Operation()))),
-            Path("/auth/logout", PathItem(Map(HttpMethod.Post        -> Operation()))),
-            Path("/auth/whomst", PathItem(Map(HttpMethod.Get         -> Operation()))),
-            Path("/auth/token/refresh", PathItem(Map(HttpMethod.Post -> Operation())))
+            Path("/balance", PathItem(Map(HttpMethod.Get      -> Operation()))),
+            Path("/auth/login", PathItem(Map(HttpMethod.Post  -> Operation()))),
+            Path("/register", PathItem(Map(HttpMethod.Post    -> Operation()))),
+            Path("/auth/logout", PathItem(Map(HttpMethod.Post -> Operation()))),
+            Path("/auth/whomst", PathItem(Map(HttpMethod.Get  -> Operation()))),
+            Path("/auth/token/refresh",
+                 PathItem(Map(HttpMethod.Post -> Operation())))
           ))
       )
     }
