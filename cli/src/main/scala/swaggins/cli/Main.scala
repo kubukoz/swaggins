@@ -1,4 +1,4 @@
-package com.kubukoz.swaggins.cli
+package swaggins.cli
 
 import java.nio.file.Path
 import cats.implicits._

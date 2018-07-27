@@ -1,7 +1,7 @@
 /**
   * OpenAPI specification models and decoders.
   * */
-package com.kubukoz.swaggins.openapi.model
+package swaggins.openapi.model
 
 import enumeratum._
 import io.circe.generic.JsonCodec

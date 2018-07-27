@@ -1,4 +1,5 @@
-package com.kubukoz.swaggins
+package swaggins
+
 import java.nio.file.{Path, Paths}
 
 import org.scalatest.{Matchers, WordSpec}

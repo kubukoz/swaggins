@@ -1,7 +1,7 @@
-package com.kubukoz.swaggins.openapi.model
+package swaggins.openapi.model
 
 import cats.effect.Sync
-import com.kubukoz.swaggins.core.Parsing
+import swaggins.core.Parsing
 
 class OpenApiParser[F[_]: Sync] {
 

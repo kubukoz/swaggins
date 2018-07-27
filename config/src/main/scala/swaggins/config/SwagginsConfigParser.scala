@@ -1,11 +1,11 @@
-package com.kubukoz.swaggins.config
+package swaggins.config
 import java.nio.file.Path
 
 import cats.effect.Sync
-import com.kubukoz.swaggins.core.Parsing
-import io.circe.{Decoder, KeyDecoder}
 import cats.implicits._
 import io.circe.generic.extras.semiauto._
+import io.circe.{Decoder, KeyDecoder}
+import swaggins.core.Parsing
 
 class SwagginsConfigParser[F[_]: Sync] {
 

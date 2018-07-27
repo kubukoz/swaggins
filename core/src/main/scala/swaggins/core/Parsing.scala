@@ -1,10 +1,10 @@
-package com.kubukoz.swaggins.core
+package swaggins.core
 
 import java.nio.file.Path
 
 import cats.effect.Sync
 import cats.implicits._
-import com.kubukoz.swaggins.core.Parser.readFile
+import swaggins.core.Parser.readFile
 import fs2.text
 import io.circe.{Decoder, Json}
 

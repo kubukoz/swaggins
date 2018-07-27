@@ -52,7 +52,7 @@ val cli = basic(project)
 
 val `swaggins` = (project in file("."))
   .settings(
-    mainClass in Compile := Some("com.kubukoz.swaggins.cli.Main"),
+    mainClass in Compile := Some("swaggins.cli.Main"),
     commonSettings
   )
   .dependsOn(openapi, config, generator, fetch, cli)

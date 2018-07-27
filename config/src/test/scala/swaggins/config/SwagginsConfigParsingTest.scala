@@ -1,5 +1,6 @@
-package com.kubukoz.swaggins.config
-import com.kubukoz.swaggins.BaseTest
+package swaggins.config
+
+import swaggins.BaseTest
 import monix.eval.Coeval
 
 class SwagginsConfigParsingTest extends BaseTest {

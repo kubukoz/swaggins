@@ -1,6 +1,6 @@
-package com.kubukoz.swaggins.openapi.model
-import com.kubukoz.swaggins.BaseTest
+package swaggins.openapi.model
 import monix.eval.Coeval
+import swaggins.BaseTest
 
 class OpenApiParsingTest extends BaseTest {
   "the parser" should {
