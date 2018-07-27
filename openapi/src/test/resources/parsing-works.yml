@@ -8,27 +8,7 @@ paths:
       responses:
         405:
           description: Invalid input
-  /auth/login:
-    post:
-      responses:
-        405:
-          description: Invalid input
-  /register:
-    post:
-      responses:
-        405:
-          description: Invalid input
-  /auth/logout:
-    post:
-      responses:
-        405:
-          description: Invalid input
-  /auth/whomst:
-    get:
-      responses:
-        405:
-          description: Invalid input
-  /auth/token/refresh:
+  /transactions:
     post:
       responses:
         405:

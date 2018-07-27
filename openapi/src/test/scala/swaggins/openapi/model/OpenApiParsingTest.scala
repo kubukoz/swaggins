@@ -15,13 +15,8 @@ class OpenApiParsingTest extends BaseTest {
         ),
         Paths(
           Set(
-            Path("/balance", PathItem(Map(HttpMethod.Get      -> Operation()))),
-            Path("/auth/login", PathItem(Map(HttpMethod.Post  -> Operation()))),
-            Path("/register", PathItem(Map(HttpMethod.Post    -> Operation()))),
-            Path("/auth/logout", PathItem(Map(HttpMethod.Post -> Operation()))),
-            Path("/auth/whomst", PathItem(Map(HttpMethod.Get  -> Operation()))),
-            Path("/auth/token/refresh",
-                 PathItem(Map(HttpMethod.Post -> Operation())))
+            Path("/balance", PathItem(Map(HttpMethod.Get     -> Operation()))),
+            Path("/transactions", PathItem(Map(HttpMethod.Post -> Operation())))
           ))
       )
     }
