@@ -32,28 +32,22 @@ val commonSettings = Seq(
 def makeDep(project: Project): ClasspathDependency =
   project % "compile->compile;test->test"
 
-val openapi = project.settings(
-  commonSettings
-)
+def veryBasic(proj: Project): Project = proj.settings(commonSettings)
 
-val config = project.settings(
-  commonSettings
-)
+val core = veryBasic(project)
 
-val generator = project.settings(
-  commonSettings
-)
+def basic(proj: Project): Project =
+  veryBasic(proj).dependsOn(core).aggregate(core)
 
-val fetch = project.settings(
-  commonSettings
-)
+val openapi = basic(project)
 
-val cli = project
-  .settings(
-    commonSettings
-  )
-  .dependsOn(openapi)
-  .aggregate(openapi)
+val config = basic(project)
+
+val generator = basic(project)
+
+val fetch = basic(project)
+
+val cli = basic(project)
 
 val `swaggins` = (project in file("."))
   .settings(
