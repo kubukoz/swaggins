@@ -6,8 +6,6 @@ scalacOptions in (Compile, console) --= Options.consoleExclusions
 
 enablePlugins(JavaAppPackaging)
 
-bloopExportJarClassifiers in ThisBuild := Some(Set("sources"))
-
 val commonDeps = Seq(
   logback,
   log4Cats,
