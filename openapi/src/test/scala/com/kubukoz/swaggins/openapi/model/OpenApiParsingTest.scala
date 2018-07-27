@@ -1,12 +1,8 @@
 package com.kubukoz.swaggins.openapi.model
-import java.nio.file
-import java.nio.file.{Paths => NioPaths}
-
+import com.kubukoz.swaggins.BaseTest
 import monix.eval.Coeval
-import org.scalatest.{Matchers, WordSpec}
 
-class OpenApiParsingTest extends WordSpec with Matchers {
-
+class OpenApiParsingTest extends BaseTest {
   "the parser" should {
     "parse the sample spec" in {
       val parser: OpenApiParser[Coeval] = new OpenApiParser[Coeval]
@@ -29,8 +25,5 @@ class OpenApiParsingTest extends WordSpec with Matchers {
           ))
       )
     }
-  }
-  private def filePath(name: String): file.Path = {
-    NioPaths.get(getClass.getResource(name).toURI)
   }
 }

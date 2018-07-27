@@ -34,10 +34,11 @@ def makeDep(project: Project): ClasspathDependency =
 
 def veryBasic(proj: Project): Project = proj.settings(commonSettings)
 
-val core = veryBasic(project)
+val core    = veryBasic(project)
+val coreDep = makeDep(core)
 
 def basic(proj: Project): Project =
-  veryBasic(proj).dependsOn(core).aggregate(core)
+  veryBasic(proj).dependsOn(coreDep)
 
 val openapi = basic(project)
 
