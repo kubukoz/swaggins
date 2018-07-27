@@ -1,9 +1,12 @@
+/**
+  * OpenAPI specification models and decoders.
+  * */
 package com.kubukoz.swaggins.openapi.parse
 
-import io.circe.{Decoder, KeyDecoder}
 import enumeratum._
 import io.circe.generic.JsonCodec
 import io.circe.generic.extras.semiauto._
+import io.circe.{Decoder, KeyDecoder}
 
 @JsonCodec(decodeOnly = true)
 case class OpenAPI(paths: Paths)
