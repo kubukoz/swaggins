@@ -12,6 +12,7 @@ val commonDeps = Seq(
   logback,
   log4Cats,
   simulacrum,
+  fs2,
   scalatest,
   decline,
   monix

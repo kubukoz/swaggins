@@ -7,13 +7,13 @@ object Dependencies {
   val betterMonadicFor = "com.olegpy" %% "better-monadic-for" % Versions.bm4
 
   //libraries
-  val logback  = "ch.qos.logback"    % "logback-classic" % Versions.logback
-  val log4Cats = "io.chrisdavenport" %% "log4cats-slf4j" % Versions.log4Cats
-
-  val scalatest  = "org.scalatest"        %% "scalatest"  % Versions.scalatest % Test
-  val simulacrum = "com.github.mpilquist" %% "simulacrum" % Versions.simulacrum
-  val monix      = "io.monix"             %% "monix"      % Versions.monix
-  val decline    = "com.monovore"         %% "decline"    % Versions.decline
+  val logback    = "ch.qos.logback"       % "logback-classic" % Versions.logback
+  val log4Cats   = "io.chrisdavenport"    %% "log4cats-slf4j" % Versions.log4Cats
+  val fs2        = "co.fs2"               %% "fs2-core"       % Versions.fs2
+  val scalatest  = "org.scalatest"        %% "scalatest"      % Versions.scalatest % Test
+  val simulacrum = "com.github.mpilquist" %% "simulacrum"     % Versions.simulacrum
+  val monix      = "io.monix"             %% "monix"          % Versions.monix
+  val decline    = "com.monovore"         %% "decline"        % Versions.decline
 
   val scalacheck = Seq(
     "com.fortysevendeg"          %% "scalacheck-datetime"       % Versions.scalacheckJava8 % Test,
@@ -68,6 +68,7 @@ object Versions {
   val macwire             = "2.3.1"
   val logback             = "1.2.3"
   val simulacrum          = "0.12.0"
+  val fs2                 = "0.10.5"
   val monix               = "3.0.0-RC1"
   val monocle             = "1.5.0"
   val scalacheckJava8     = "0.2.0"

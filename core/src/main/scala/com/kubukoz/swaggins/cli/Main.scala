@@ -4,7 +4,7 @@ import java.nio.file.{Files, Path}
 
 import cats.data.ValidatedNel
 import cats.implicits._
-import com.kubukoz.swaggins.cli.spec.Spec
+import com.kubukoz.swaggins.openapi.parse.OpenAPI
 import com.monovore.decline._
 import io.circe.yaml.parser
 
@@ -30,11 +30,11 @@ object Main
 
 object MainUtils {
 
-  def parseSpec(path: Path): ValidatedNel[String, Spec] =
+  def parseSpec(path: Path): ValidatedNel[String, OpenAPI] =
     path.valid
       .ensure("spec must be a file.")(_.toFile.exists())
       .map(Files.newBufferedReader)
       .andThen(parser.parse(_).toValidated.leftMap(_.message))
-      .andThen(_.as[Spec].toValidated.leftMap(_.message))
+      .andThen(_.as[OpenAPI].toValidated.leftMap(_.message))
       .toValidatedNel
 }
