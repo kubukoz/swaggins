@@ -45,8 +45,12 @@ val openapi = basic(project)
 val config = basic(project)
 
 val generator = basic(project)
+  .dependsOn(openapi)
 
 val fetch = basic(project)
+
+val app = basic(project)
+  .dependsOn(generator, config)
 
 val cli = basic(project)
 
