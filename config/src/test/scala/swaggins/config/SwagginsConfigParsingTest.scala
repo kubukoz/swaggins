@@ -9,12 +9,7 @@ class SwagginsConfigParsingTest extends BaseTest {
       val parser: SwagginsConfigParser[Coeval] =
         new SwagginsConfigParser[Coeval]
 
-      parser.parse(filePath("/swaggins.json")).value shouldBe SwagginsConfig(
-        Map(
-          SpecRepository(Some("gh"), "kubukoz") -> (()),
-          SpecRepository(None, "kumalg")        -> (())
-        )
-      )
+      parser.parse(filePath("/swaggins.json")).value shouldBe SwagginsConfig()
     }
   }
 }
