@@ -11,7 +11,17 @@ class OpenApiParsingTest extends WordSpec with Matchers {
     "parse the sample spec" in {
       import OpenApiParser.parse
 
-      parse[Coeval](filePath("/parsing-works.yml")).value
+      parse[Coeval](filePath("/parsing-works.yml")).value shouldBe OpenAPI(
+        Paths(
+          Set(
+            Path("/balance", PathItem(Map(HttpMethod.Get             -> Operation()))),
+            Path("/auth/login", PathItem(Map(HttpMethod.Post         -> Operation()))),
+            Path("/register", PathItem(Map(HttpMethod.Post           -> Operation()))),
+            Path("/auth/logout", PathItem(Map(HttpMethod.Post        -> Operation()))),
+            Path("/auth/whomst", PathItem(Map(HttpMethod.Get         -> Operation()))),
+            Path("/auth/token/refresh", PathItem(Map(HttpMethod.Post -> Operation())))
+          ))
+      )
     }
   }
   private def filePath(name: String): file.Path = {

@@ -11,14 +11,14 @@ import io.circe.{Decoder, KeyDecoder}
 @JsonCodec(decodeOnly = true)
 case class OpenAPI(paths: Paths)
 
-case class Paths(paths: List[Path])
+case class Paths(paths: Set[Path])
 
 object Paths {
   implicit val decoder: Decoder[Paths] = Decoder[Map[String, PathItem]].map {
-    _.toList.map {
+    _.map {
       case (path, methods) =>
         Path(path, methods)
-    }
+    }.toSet
   }.map(Paths(_))
 }
 
