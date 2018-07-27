@@ -9,7 +9,10 @@ import io.circe.generic.extras.semiauto._
 import io.circe.{Decoder, KeyDecoder}
 
 @JsonCodec(decodeOnly = true)
-case class OpenAPI(paths: Paths)
+case class OpenAPI(openapi: String, info: Info, paths: Paths)
+
+@JsonCodec(decodeOnly = true)
+case class Info(version: String, title: String)
 
 case class Paths(paths: Set[Path])
 

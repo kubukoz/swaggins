@@ -1,13 +1,35 @@
+openapi: 3.0.1
+info:
+  version: 1.0.0
+  title: My example project
 paths:
   /balance:
     get:
+      responses:
+        405:
+          description: Invalid input
   /auth/login:
     post:
+      responses:
+        405:
+          description: Invalid input
   /register:
     post:
+      responses:
+        405:
+          description: Invalid input
   /auth/logout:
     post:
+      responses:
+        405:
+          description: Invalid input
   /auth/whomst:
     get:
+      responses:
+        405:
+          description: Invalid input
   /auth/token/refresh:
     post:
+      responses:
+        405:
+          description: Invalid input
