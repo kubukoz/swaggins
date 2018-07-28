@@ -50,13 +50,13 @@ object Experiment {
       case (name, Right(NumberSchema)) =>
         CaseClass(
           toCamel(name.value),
-          List(CaseClassField("value", "Int", true)),
+          List(CaseClassField("value", "Int", required = true)),
           List("AnyVal")
         )
       case (name, Right(StringSchema)) =>
         CaseClass(
           toCamel(name.value),
-          List(CaseClassField("value", "Int", true)),
+          List(CaseClassField("value", "Int", required = true)),
           List("AnyVal")
         )
       case _ => ???
