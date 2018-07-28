@@ -93,6 +93,7 @@ class OpenApiParserTest extends BaseTest {
         OpenAPI("3.0.1", Info("1.0.0", "My example project"), paths, components)
 
       parser.parse(filePath("/parsing-works.yml")).value shouldBe expected
+      Experiment.gen(expected).foreach(println)
     }
   }
 }
