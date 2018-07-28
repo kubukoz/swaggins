@@ -20,6 +20,18 @@ class SwagginsConfigReader[F[_]: Sync] {
 
   private def validate(
     config: SwagginsConfig): ValidatedNel[SourceIdentifier, Unit] = {
+
+    SwagginsConfigValidator.validateSources(config)
+  }
+
+  def read(path: Path): F[SwagginsConfig] =
+    Parsers.json.parseFile[F, SwagginsConfig](path)
+}
+
+object SwagginsConfigValidator {
+
+  def validateSources(
+    config: SwagginsConfig): ValidatedNel[SourceIdentifier, Unit] = {
     val validateSources: ValidatedNel[SourceIdentifier, Unit] = {
       val usedSources = config.code.value.keys
       val isDeclared: SourceIdentifier => Boolean =
@@ -30,10 +42,6 @@ class SwagginsConfigReader[F[_]: Sync] {
           _.valid.ensureOr(identity)(isDeclared).toValidatedNel
         }
     }
-
     validateSources
   }
-
-  def read(path: Path): F[SwagginsConfig] =
-    Parsers.json.parseFile[F, SwagginsConfig](path)
 }

@@ -32,8 +32,8 @@ class SwagginsConfigReaderTest extends BaseTest {
       Sources(
         NonEmptyMap.of(
           SourceIdentifier("kubukoz/hyze-spec") -> NonEmptyList.of(
-            SourceUri("fs", "../hyze-spec"),
-            SourceUri("gh", "kubukoz/hyze-spec"))))
+            SourceUri(SourceScheme.Filesystem, "../hyze-spec"),
+            SourceUri(SourceScheme.Github, "kubukoz/hyze-spec"))))
     )
 
     val path = filePath("/swaggins.json")
@@ -70,7 +70,7 @@ class SwagginsConfigReaderTest extends BaseTest {
                 ))))),
         Sources(
           NonEmptyMap.of(SourceIdentifier("kubukoz/hyze-spec") -> NonEmptyList
-            .one(SourceUri("fs", "../hyze-spec"))))
+            .one(SourceUri(SourceScheme.Filesystem, "../hyze-spec"))))
       )
 
       reader
