@@ -8,6 +8,10 @@ paths:
       responses:
         405:
           description: Invalid input
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/account-balances'
   /transactions:
     post:
       responses:
@@ -15,3 +19,40 @@ paths:
           description: Invalid input
 #  /users:
 #    $ref: 'users/types.yml#/user'
+components:
+  schemas:
+    money:
+      type: number
+    account-balances:
+      type: object
+      required:
+        - children
+      properties:
+        children:
+          type: array
+          items:
+            $ref: '#/components/schemas/account-balance-tree'
+    account-balance-tree:
+      type: object
+      required:
+        - value
+        - children
+      properties:
+        value:
+          $ref: '#/components/schemas/account-balance-node'
+        children:
+          type: array
+          items:
+            $ref: '#/components/schemas/account-balance-tree'
+    account-balance-node:
+      type: object
+      required:
+        - id
+        - name
+      properties:
+        id:
+          type: number
+        name:
+          type: string
+        balance:
+          $ref: '#/components/schemas/money'
