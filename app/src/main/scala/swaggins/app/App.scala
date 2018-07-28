@@ -1,7 +1,7 @@
 package swaggins.app
 
 import cats.Applicative
-import swaggins.config.SwagginsConfig
+import swaggins.config.model.SwagginsConfig
 import swaggins.fetch.SpecSource
 import swaggins.generator.{GeneratedFile, Generator}
 

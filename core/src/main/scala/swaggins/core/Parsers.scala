@@ -8,7 +8,7 @@ import swaggins.core.Parser.readFile
 import fs2.text
 import io.circe.{Decoder, Json}
 
-object Parsing {
+object Parsers {
   object yaml extends Parser(io.circe.yaml.parser.parse)
   object json extends Parser(io.circe.parser.parse)
 }

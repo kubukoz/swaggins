@@ -7,21 +7,25 @@
   },
 
   "code": {
-    "kubukoz": {
-      "hyze-transaction:0.0.1": {
+    "kubukoz/hyze-spec": {
+      "transaction:0.0.1": {
         "http4s-server": {
-          "path": "src/main/scala" //paths.by-package will add the package here
+          "path": "src/main/scala"
         },
         "http4s-client": {
           "path": "src/test/scala"
         }
       },
 
-      "hyze-account:0.0.2": {
+      "account:0.0.2": {
         "http4s-client": {
           "path": "src/test/scala"
         }
       }
     }
+  },
+
+  "sources": {
+    "kubukoz/hyze-spec": ["fs:../hyze-spec", "gh:kubukoz/hyze-spec"]
   }
 }

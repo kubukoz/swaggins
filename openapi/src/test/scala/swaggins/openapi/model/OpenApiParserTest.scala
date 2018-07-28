@@ -2,7 +2,9 @@ package swaggins.openapi.model
 import monix.eval.Coeval
 import swaggins.BaseTest
 
-class OpenApiParsingTest extends BaseTest {
+import scala.collection.immutable.SortedMap
+
+class OpenApiParserTest extends BaseTest {
   "the parser" should {
     "parse the sample spec" in {
       val parser: OpenApiParser[Coeval] = new OpenApiParser[Coeval]
@@ -15,8 +17,8 @@ class OpenApiParsingTest extends BaseTest {
         ),
         Paths(
           Set(
-            Path("/balance", PathItem(Map(HttpMethod.Get     -> Operation()))),
-            Path("/transactions", PathItem(Map(HttpMethod.Post -> Operation())))
+            Path("/balance", PathItem(SortedMap(HttpMethod.Get     -> Operation()))),
+            Path("/transactions", PathItem(SortedMap(HttpMethod.Post -> Operation())))
           ))
       )
     }

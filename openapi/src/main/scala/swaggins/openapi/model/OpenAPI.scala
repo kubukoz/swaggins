@@ -8,6 +8,8 @@ import io.circe.generic.JsonCodec
 import io.circe.generic.extras.semiauto._
 import io.circe.{Decoder, KeyDecoder}
 
+import scala.collection.immutable.SortedMap
+
 @JsonCodec(decodeOnly = true)
 case class OpenAPI(openapi: String, info: Info, paths: Paths)
 
@@ -17,7 +19,7 @@ case class Info(version: String, title: String)
 case class Paths(paths: Set[Path])
 
 object Paths {
-  implicit val decoder: Decoder[Paths] = Decoder[Map[String, PathItem]].map {
+  implicit val decoder: Decoder[Paths] = Decoder[SortedMap[String, PathItem]].map {
     _.map {
       case (path, methods) =>
         Path(path, methods)
@@ -28,7 +30,7 @@ object Paths {
 @JsonCodec(decodeOnly = true)
 case class Path(path: String, item: PathItem)
 
-case class PathItem(value: Map[HttpMethod, Operation]) extends AnyVal {
+case class PathItem(value: SortedMap[HttpMethod, Operation]) extends AnyVal {
   def get: Option[Operation] = value.get(HttpMethod.Get)
 }
 
@@ -47,6 +49,8 @@ object HttpMethod extends Enum[HttpMethod] {
 
   implicit val decoder: KeyDecoder[HttpMethod] =
     KeyDecoder.instance(HttpMethod.withNameInsensitiveOption)
+
+  implicit val ordering: Ordering[HttpMethod] = Ordering.by(indexOf)
 }
 
 @JsonCodec(decodeOnly = true)
