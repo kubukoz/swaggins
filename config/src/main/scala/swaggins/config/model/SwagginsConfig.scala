@@ -5,4 +5,3 @@ import swaggins.config.model.sources.Sources
 
 @JsonCodec(decodeOnly = true)
 case class SwagginsConfig(code: Code, sources: Sources)
-

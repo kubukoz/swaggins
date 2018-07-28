@@ -1,14 +1,14 @@
 package swaggins.config.model.sources
 
-import cats.data.NonEmptyList
+import cats.data.{NonEmptyList, NonEmptyMap}
 import cats.implicits._
 import io.circe.Decoder
 import io.circe.generic.extras.semiauto._
 import swaggins.config.model.shared.SourceIdentifier
+import swaggins.core.implicits._
 
-import scala.collection.immutable.SortedMap
-
-case class Sources(value: SortedMap[SourceIdentifier, NonEmptyList[SourceUri]])
+case class Sources(
+  value: NonEmptyMap[SourceIdentifier, NonEmptyList[SourceUri]])
     extends AnyVal
 
 object Sources {

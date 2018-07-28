@@ -1,4 +1,3 @@
 package swaggins.fetch
 
-trait SpecSource[F[_]] {
-}
+trait SpecSource[F[_]] {}

@@ -1,7 +1,7 @@
 package swaggins.config
 
 import cats.data.NonEmptyList
-import cats.implicits._
+import cats.data._
 import io.circe.DecodingFailure
 import monix.eval.Coeval
 import swaggins.BaseTest
@@ -11,8 +11,6 @@ import swaggins.config.model.code._
 import swaggins.config.model.shared.SourceIdentifier
 import swaggins.config.model.sources._
 
-import scala.collection.immutable.SortedMap
-
 class SwagginsConfigReaderTest extends BaseTest {
   "reader" should {
     val reader: SwagginsConfigReader[Coeval] =
@@ -20,19 +18,19 @@ class SwagginsConfigReaderTest extends BaseTest {
 
     val parsed = SwagginsConfig(
       Code(
-        SortedMap(
-          SourceIdentifier("kubukoz/hyze-spec") -> SourceSpecs(SortedMap(
+        NonEmptyMap.of(
+          SourceIdentifier("kubukoz/hyze-spec") -> SourceSpecs(NonEmptyMap.of(
             SpecIdentifier("transaction", "0.0.1") -> SpecGenerators(
-              SortedMap(GeneratorKey("http4s-server") -> GeneratorConfig(
-                          "src/main/scala"),
-                        GeneratorKey("http4s-client") -> GeneratorConfig(
-                          "src/test/scala"))),
+              NonEmptyMap.of(GeneratorKey("http4s-server") -> GeneratorConfig(
+                               "src/main/scala"),
+                             GeneratorKey("http4s-client") -> GeneratorConfig(
+                               "src/test/scala"))),
             SpecIdentifier("account", "0.0.2") -> SpecGenerators(
-              SortedMap(GeneratorKey("http4s-client") -> GeneratorConfig(
+              NonEmptyMap.of(GeneratorKey("http4s-client") -> GeneratorConfig(
                 "src/test/scala")))
           )))),
       Sources(
-        SortedMap(
+        NonEmptyMap.of(
           SourceIdentifier("kubukoz/hyze-spec") -> NonEmptyList.of(
             SourceUri("fs", "../hyze-spec"),
             SourceUri("gh", "kubukoz/hyze-spec"))))
@@ -62,11 +60,17 @@ class SwagginsConfigReaderTest extends BaseTest {
     "not get if a source isn't defined" in {
       val invalid = SwagginsConfig(
         Code(
-          SortedMap(SourceIdentifier("kubukoz/hyze-spec2") -> SourceSpecs(
-            SortedMap.empty))),
+          NonEmptyMap.of(
+            SourceIdentifier("kubukoz/hyze-spec2") -> SourceSpecs(
+              NonEmptyMap.one(
+                SpecIdentifier("transaction", "0.0.1"),
+                SpecGenerators(
+                  NonEmptyMap.one(GeneratorKey("http4s-server"),
+                                  GeneratorConfig("src/main/scala"))
+                ))))),
         Sources(
-          SortedMap(SourceIdentifier("kubukoz/hyze-spec") -> NonEmptyList.one(
-            SourceUri("fs", "../hyze-spec"))))
+          NonEmptyMap.of(SourceIdentifier("kubukoz/hyze-spec") -> NonEmptyList
+            .one(SourceUri("fs", "../hyze-spec"))))
       )
 
       reader
@@ -74,7 +78,8 @@ class SwagginsConfigReaderTest extends BaseTest {
         .failed
         .value
         .asInstanceOf[UnknownSourcesException]
-        .sources shouldBe NonEmptyList.of(SourceIdentifier("kubukoz/hyze-spec2"))
+        .sources shouldBe NonEmptyList.of(
+        SourceIdentifier("kubukoz/hyze-spec2"))
 
     }
   }

@@ -1,19 +1,21 @@
 package swaggins.config.model.code
+import cats.Order
+import cats.data.NonEmptyMap
 import io.circe.{Decoder, KeyDecoder}
 import io.circe.generic.extras.semiauto._
 import cats.implicits._
 import io.circe.generic.JsonCodec
 import swaggins.config.model.shared.SourceIdentifier
+import swaggins.core.implicits._
 
-import scala.collection.immutable.SortedMap
-
-case class Code(value: SortedMap[SourceIdentifier, SourceSpecs]) extends AnyVal
+case class Code(value: NonEmptyMap[SourceIdentifier, SourceSpecs])
+    extends AnyVal
 
 object Code {
   implicit val decoder: Decoder[Code] = deriveUnwrappedDecoder
 }
 
-case class SourceSpecs(value: SortedMap[SpecIdentifier, SpecGenerators])
+case class SourceSpecs(value: NonEmptyMap[SpecIdentifier, SpecGenerators])
     extends AnyVal
 
 object SourceSpecs {
@@ -30,11 +32,11 @@ object SpecIdentifier {
     }
   }
 
-  implicit val ordering: Ordering[SpecIdentifier] =
-    Ordering.by(ident => (ident.name, ident.version))
+  implicit val order: Order[SpecIdentifier] =
+    Order.by(ident => (ident.name, ident.version))
 }
 
-case class SpecGenerators(value: SortedMap[GeneratorKey, GeneratorConfig])
+case class SpecGenerators(value: NonEmptyMap[GeneratorKey, GeneratorConfig])
     extends AnyVal
 
 object SpecGenerators {
@@ -47,7 +49,7 @@ object GeneratorKey {
   implicit val decoder: KeyDecoder[GeneratorKey] =
     KeyDecoder.instance(apply(_).some)
 
-  implicit val ordering: Ordering[GeneratorKey] = Ordering.by(_.value)
+  implicit val order: Order[GeneratorKey] = Order.by(_.value)
 }
 
 @JsonCodec(decodeOnly = true)

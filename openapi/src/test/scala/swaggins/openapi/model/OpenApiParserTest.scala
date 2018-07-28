@@ -1,8 +1,8 @@
 package swaggins.openapi.model
+
 import monix.eval.Coeval
 import swaggins.BaseTest
-
-import scala.collection.immutable.SortedMap
+import cats.data.{NonEmptyMap, NonEmptySet}
 
 class OpenApiParserTest extends BaseTest {
   "the parser" should {
@@ -16,9 +16,11 @@ class OpenApiParserTest extends BaseTest {
           "My example project"
         ),
         Paths(
-          Set(
-            Path("/balance", PathItem(SortedMap(HttpMethod.Get     -> Operation()))),
-            Path("/transactions", PathItem(SortedMap(HttpMethod.Post -> Operation())))
+          NonEmptySet.of(
+            Path("/balance",
+                 PathItem(NonEmptyMap.one(HttpMethod.Get, Operation()))),
+            Path("/transactions",
+                 PathItem(NonEmptyMap.one(HttpMethod.Post, Operation())))
           ))
       )
     }

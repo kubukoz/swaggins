@@ -1,7 +1,7 @@
 package swaggins.config
 import java.nio.file.Path
 
-import cats.data.{NonEmptyList, ValidatedNel}
+import cats.data.ValidatedNel
 import cats.effect.Sync
 import cats.implicits._
 import swaggins.config.error.UnknownSourcesException
@@ -21,8 +21,9 @@ class SwagginsConfigReader[F[_]: Sync] {
   private def validate(
     config: SwagginsConfig): ValidatedNel[SourceIdentifier, Unit] = {
     val validateSources: ValidatedNel[SourceIdentifier, Unit] = {
-      val usedSources                             = config.code.value.keySet
-      val isDeclared: SourceIdentifier => Boolean = config.sources.value.keySet
+      val usedSources = config.code.value.keys
+      val isDeclared: SourceIdentifier => Boolean =
+        config.sources.value.keys.contains
 
       usedSources.toList
         .traverse_[ValidatedNel[SourceIdentifier, ?], SourceIdentifier] {
@@ -36,4 +37,3 @@ class SwagginsConfigReader[F[_]: Sync] {
   def read(path: Path): F[SwagginsConfig] =
     Parsers.json.parseFile[F, SwagginsConfig](path)
 }
-
