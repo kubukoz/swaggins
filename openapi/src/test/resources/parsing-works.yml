@@ -6,8 +6,7 @@ paths:
   /balance:
     get:
       responses:
-        405:
-          description: Invalid input
+        200:
           content:
             application/json:
               schema:
@@ -15,10 +14,11 @@ paths:
   /transactions:
     post:
       responses:
-        405:
-          description: Invalid input
-#  /users:
-#    $ref: 'users/types.yml#/user'
+        200:
+          content:
+            application/json:
+              schema:
+                type: number
 components:
   schemas:
     money:

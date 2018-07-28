@@ -1,4 +1,5 @@
 package swaggins.openapi.model.shared
+
 import cats.data.{NonEmptyList, NonEmptyMap}
 import cats.implicits._
 import enumeratum._

@@ -20,14 +20,24 @@ class OpenApiParserTest extends BaseTest {
 
         Operation(
           Responses(
-            NonEmptyMap.of(StatusCode(405) -> Response(Some(jsonResponse)))))
+            NonEmptyMap.of(StatusCode(200) -> Response(Some(jsonResponse)))))
       }
 
       val balancePath = PathItem(NonEmptyMap.of(Get -> getBalanceOperation))
 
-      val transactionsPath = PathItem(
-        NonEmptyMap.of(Post -> Operation(
-          Responses(NonEmptyMap.of(StatusCode(405) -> Response(None))))))
+      val postTransactionsOperation = Operation(
+        Responses(
+          NonEmptyMap.of(
+            StatusCode(200) -> Response(
+              Some(
+                NonEmptyMap.of(
+                  ContentType("application/json") -> MediaType(
+                    Some(Right(NumberSchema)))
+                )
+              )))))
+
+      val transactionsPath =
+        PathItem(NonEmptyMap.of(Post -> postTransactionsOperation))
 
       val paths = Paths(
         NonEmptySet.of(Path("/balance", balancePath),
@@ -46,10 +56,12 @@ class OpenApiParserTest extends BaseTest {
       val balanceTreeSchema = ObjectSchema(
         Some(NonEmptyList.of(SchemaName("value"), SchemaName("children"))),
         NonEmptyMap.of(
-          SchemaName("children") -> Right(ArraySchema(Left(Reference(
-            ReferenceString("#/components/schemas/account-balance-tree"))))),
-          SchemaName("value") -> Left(Reference(
-            ReferenceString("#/components/schemas/account-balance-node")))
+          SchemaName("children") -> Right(
+            ArraySchema(Left(Reference(
+              ReferenceString("#/components/schemas/account-balance-tree"))))),
+          SchemaName("value") -> Left(
+            Reference(
+              ReferenceString("#/components/schemas/account-balance-node")))
         )
       )
 
@@ -71,7 +83,6 @@ class OpenApiParserTest extends BaseTest {
       val expected =
         OpenAPI("3.0.1", Info("1.0.0", "My example project"), paths, components)
 
-      println(parser.parse(filePath("/parsing-works.yml")).value)
       parser.parse(filePath("/parsing-works.yml")).value shouldBe expected
     }
   }
