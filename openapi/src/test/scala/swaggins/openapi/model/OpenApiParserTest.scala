@@ -3,6 +3,8 @@ package swaggins.openapi.model
 import cats.data.{NonEmptyList, NonEmptyMap, NonEmptySet}
 import monix.eval.Coeval
 import swaggins.BaseTest
+import swaggins.openapi.OpenApiParser
+import swaggins.openapi.experimental.Experiment
 import swaggins.openapi.model.components._
 import swaggins.openapi.model.paths.HttpMethod._
 import swaggins.openapi.model.paths._
@@ -45,31 +47,38 @@ class OpenApiParserTest extends BaseTest {
 
       val balanceNodeSchema = ObjectSchema(
         Some(NonEmptyList.of(SchemaName("id"), SchemaName("name"))),
-        NonEmptyMap.of(
-          SchemaName("balance") -> Left(
-            Reference(ReferenceString("#/components/schemas/money"))),
-          SchemaName("id")   -> Right(NumberSchema),
-          SchemaName("name") -> Right(StringSchema)
+        NonEmptyList.of(
+          Property(SchemaName("id"), Right(NumberSchema)),
+          Property(SchemaName("name"), Right(StringSchema)),
+          Property(
+            SchemaName("balance"),
+            Left(Reference(ReferenceString("#/components/schemas/money"))))
         )
       )
 
       val balanceTreeSchema = ObjectSchema(
         Some(NonEmptyList.of(SchemaName("value"), SchemaName("children"))),
-        NonEmptyMap.of(
-          SchemaName("children") -> Right(
-            ArraySchema(Left(Reference(
-              ReferenceString("#/components/schemas/account-balance-tree"))))),
-          SchemaName("value") -> Left(
-            Reference(
-              ReferenceString("#/components/schemas/account-balance-node")))
+        NonEmptyList.of(
+          Property(
+            SchemaName("value"),
+            Left(
+              Reference(
+                ReferenceString("#/components/schemas/account-balance-node")))),
+          Property(
+            SchemaName("children"),
+            Right(ArraySchema(Left(Reference(
+              ReferenceString("#/components/schemas/account-balance-tree"))))))
         )
       )
 
       val balanceListSchema = ObjectSchema(
         Some(NonEmptyList.one(SchemaName("children"))),
-        NonEmptyMap.of(
-          SchemaName("children") -> Right(ArraySchema(Left(Reference(
-            ReferenceString("#/components/schemas/account-balance-tree"))))))
+        NonEmptyList.of(
+          Property(
+            SchemaName("children"),
+            Right(ArraySchema(Left(Reference(
+              ReferenceString("#/components/schemas/account-balance-tree"))))))
+        )
       )
 
       val components = Components(

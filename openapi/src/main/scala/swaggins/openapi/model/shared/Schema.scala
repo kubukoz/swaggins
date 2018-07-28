@@ -1,11 +1,10 @@
 package swaggins.openapi.model.shared
 
-import cats.data.{NonEmptyList, NonEmptyMap}
+import cats.data.NonEmptyList
 import cats.implicits._
 import enumeratum._
-import io.circe.Decoder
 import io.circe.generic.JsonCodec
-import swaggins.core.implicits._
+import io.circe._
 import swaggins.openapi.model.components.SchemaName
 
 import scala.collection.immutable
@@ -34,8 +33,48 @@ object Schema {
 @JsonCodec(decodeOnly = true)
 case class ObjectSchema(
   required: Option[NonEmptyList[SchemaName]],
-  properties: NonEmptyMap[SchemaName, Reference.Able[Schema]]
+  properties: NonEmptyList[Property]
 ) extends Schema
+
+object ObjectSchema {
+
+  //re-usable decoder of NEL[(K, V)] (like NEM[K, V] but ordered like the input)
+  def pairNelDecoder[K: KeyDecoder, V: Decoder, U](
+    untuple: (K, V) => U): Decoder[NonEmptyList[U]] = {
+    val toNel: JsonObject => Decoder.Result[NonEmptyList[(String, Json)]] = {
+      _.toList.toNel.toRight(DecodingFailure("Must be non-empty", Nil))
+    }
+
+    val decodeProperty: (String, Json) => Decoder.Result[U] =
+      (key, valueJson) =>
+        Decoder[V].decodeJson(valueJson).flatMap { value =>
+          KeyDecoder[K]
+            .apply(key)
+            .map(untuple(_, value))
+            .toRight(DecodingFailure("Invalid key", Nil))
+      }
+
+    def decodeObject(obj: JsonObject): Decoder.Result[NonEmptyList[U]] = {
+      obj.asRight
+        .flatMap(toNel)
+        .flatMap(_.traverse(decodeProperty.tupled))
+    }
+
+    Decoder[Json]
+      .emap(_.asObject.toRight("Must be an object"))
+      .emapTry(decodeObject(_).toTry)
+  }
+
+  implicit val propNelDecoder: Decoder[NonEmptyList[Property]] = {
+    pairNelDecoder(Property)
+  }
+
+}
+
+/**
+  * $synthetic
+  * */
+case class Property(name: SchemaName, schema: Reference.Able[Schema])
 
 /**
   * $synthetic
