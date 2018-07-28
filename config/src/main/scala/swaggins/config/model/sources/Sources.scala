@@ -1,5 +1,6 @@
 package swaggins.config.model.sources
 
+import cats.data.NonEmptyList
 import cats.implicits._
 import io.circe.Decoder
 import io.circe.generic.extras.semiauto._
@@ -7,12 +8,10 @@ import swaggins.config.model.shared.SourceIdentifier
 
 import scala.collection.immutable.SortedMap
 
-case class Sources(value: SortedMap[SourceIdentifier, List[SourceUri]]) extends AnyVal
+case class Sources(value: SortedMap[SourceIdentifier, NonEmptyList[SourceUri]])
+    extends AnyVal
 
 object Sources {
-  {
-    Decoder[SortedMap[String, String]]
-  }
   implicit val decoder: Decoder[Sources] = deriveUnwrappedDecoder
 }
 
