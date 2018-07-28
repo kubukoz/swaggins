@@ -8,8 +8,9 @@ sealed trait TypeInfo {
   def name: String
 }
 
-case class CaseClassField(name: String, tpe: String) {
-  override def toString: String = s"""$name: $tpe"""
+case class CaseClassField(name: String, tpe: String, required: Boolean) {
+  val typeString = if(required) tpe else s"Option[$tpe]"
+  override def toString: String = s"""$name: $typeString"""
 }
 
 case class CaseClass(name: String,
@@ -32,29 +33,30 @@ object Experiment {
     * */
   def gen(spec: OpenAPI): List[TypeInfo] = {
     spec.components.schemas.toSortedMap.toList.map {
-      case (name, Left(ref)) => Alias(name.value, ref.`$ref`.value)
+//      case (name, Left(ref)) => Alias(name.value, ref.`$ref`.value)
       case (name, Right(ObjectSchema(required, properties))) =>
         CaseClass(
           toCamel(name.value),
           properties.toList.map { prop =>
+            val isRequired = required.forall(_.exists(_.value == prop.name.value))
             prop.schema match {
               case Left(ref) =>
-                CaseClassField(prop.name.value, referenceString(ref))
+                CaseClassField(prop.name.value, referenceString(ref), isRequired)
               case Right(tpe) =>
-                CaseClassField(prop.name.value, typeString(tpe)(name.value))
+                CaseClassField(prop.name.value, typeString(tpe)(name.value), isRequired)
             }
           }
         )
       case (name, Right(NumberSchema)) =>
         CaseClass(
           toCamel(name.value),
-          List(CaseClassField("value", "Int")),
+          List(CaseClassField("value", "Int", true)),
           List("AnyVal")
         )
       case (name, Right(StringSchema)) =>
         CaseClass(
           toCamel(name.value),
-          List(CaseClassField("value", "Int")),
+          List(CaseClassField("value", "Int", true)),
           List("AnyVal")
         )
       case _ => ???
@@ -62,7 +64,7 @@ object Experiment {
   }
 
   def typeString(tpe: Schema)(parent: String): String = tpe match {
-    case ObjectSchema(required, properties) => s"${parent}SyntheticChild1"
+    case ObjectSchema(_, _) => s"${parent}SyntheticChild1"
     case ArraySchema(items) =>
       s"List[${items.fold(referenceString, typeString)}]"
     case NumberSchema => "Int"
