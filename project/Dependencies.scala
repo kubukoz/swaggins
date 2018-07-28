@@ -48,6 +48,7 @@ object Dependencies {
 
   val cats =
     Seq(
+      "org.typelevel"     %% "cats-core"    % Versions.cats,
       "io.chrisdavenport" %% "cats-par"     % Versions.catsParTemp,
       "org.typelevel"     %% "cats-laws"    % Versions.cats % Test,
       "org.typelevel"     %% "cats-testkit" % Versions.cats % Test
@@ -63,7 +64,7 @@ object Dependencies {
 object Versions {
   val log4Cats            = "0.0.7"
   val bm4                 = "0.2.4"
-  val cats                = "1.1.0"
+  val cats                = "1.2.0"
   val catsParTemp         = "0.1.0"
   val circe               = "0.9.3"
   val circeYaml           = "0.6.1"

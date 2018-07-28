@@ -13,7 +13,7 @@ val commonDeps = Seq(
   scalatest,
   decline,
   monix
-) ++ circe ++ monocle ++ scalacheck ++ pureconfig ++ fs2
+) ++ circe ++ monocle ++ scalacheck ++ pureconfig ++ fs2 ++ cats
 
 val plugins = List(
   addCompilerPlugin(macroParadise),
@@ -44,20 +44,18 @@ val openapi = basic(project)
 
 val config = basic(project)
 
-val generator = basic(project)
-  .dependsOn(openapi)
+val generator = basic(project).dependsOn(openapi, config)
 
-val fetch = basic(project)
+val fetch = basic(project).dependsOn(openapi)
 
-val app = basic(project)
-  .dependsOn(generator, config)
+val app = basic(project).dependsOn(generator, config, fetch)
 
-val cli = basic(project)
+val cli = basic(project).dependsOn(app)
 
 val `swaggins` = (project in file("."))
   .settings(
     mainClass in Compile := Some("swaggins.cli.Main"),
     commonSettings
   )
-  .dependsOn(openapi, config, generator, fetch, cli)
-  .aggregate(openapi, config, generator, fetch, cli)
+  .dependsOn(openapi, config, generator, fetch, app, cli)
+  .aggregate(openapi, config, generator, fetch, app, cli)

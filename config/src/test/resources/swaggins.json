@@ -1,4 +1,31 @@
 {
-  "gh:kubukoz": {},
-  "kumalg": {}
+  "attributes": {
+    "scala": {
+      "package": "app.hyze",
+      "paths.by-package": true
+    }
+  },
+
+  "code": {
+    "kubukoz/hyze-spec": {
+      "transaction:0.0.1": {
+        "http4s-server": {
+          "path": "src/main/scala"
+        },
+        "http4s-client": {
+          "path": "src/test/scala"
+        }
+      },
+
+      "account:0.0.2": {
+        "http4s-client": {
+          "path": "src/test/scala"
+        }
+      }
+    }
+  },
+
+  "sources": {
+    "kubukoz/hyze-spec": ["fs:../hyze-spec", "gh:kubukoz/hyze-spec"]
+  }
 }

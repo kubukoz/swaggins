@@ -6,30 +6,53 @@ paths:
   /balance:
     get:
       responses:
-        405:
-          description: Invalid input
-  /auth/login:
+        200:
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/account-balances'
+  /transactions:
     post:
       responses:
-        405:
-          description: Invalid input
-  /register:
-    post:
-      responses:
-        405:
-          description: Invalid input
-  /auth/logout:
-    post:
-      responses:
-        405:
-          description: Invalid input
-  /auth/whomst:
-    get:
-      responses:
-        405:
-          description: Invalid input
-  /auth/token/refresh:
-    post:
-      responses:
-        405:
-          description: Invalid input
+        200:
+          content:
+            application/json:
+              schema:
+                type: number
+components:
+  schemas:
+    money:
+      type: number
+    account-balances:
+      type: object
+      required:
+        - children
+      properties:
+        children:
+          type: array
+          items:
+            $ref: '#/components/schemas/account-balance-tree'
+    account-balance-tree:
+      type: object
+      required:
+        - value
+        - children
+      properties:
+        value:
+          $ref: '#/components/schemas/account-balance-node'
+        children:
+          type: array
+          items:
+            $ref: '#/components/schemas/account-balance-tree'
+    account-balance-node:
+      type: object
+      required:
+        - id
+        - name
+      properties:
+        id:
+          type: number
+        name:
+          type: string
+        balance:
+          $ref: '#/components/schemas/money'

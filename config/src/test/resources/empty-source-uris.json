@@ -1,0 +1,15 @@
+{
+  "code": {
+    "kubukoz/hyze-spec": {
+      "transaction:0.0.1": {
+        "http4s-server": {
+          "path": "src/main/scala"
+        }
+      }
+    }
+  },
+
+  "sources": {
+    "kubukoz/hyze-spec": []
+  }
+}
