@@ -16,8 +16,8 @@ object Schema {
     val decoders: SchemaType => Decoder[_ <: Schema] = {
       case SchemaType.Object => Decoder[ObjectSchema]
       case SchemaType.Array  => Decoder[ArraySchema]
-      case SchemaType.Number => Decoder[NumberSchema]
-      case SchemaType.String => Decoder[StringSchema]
+      case SchemaType.Number => Decoder[NumberSchema.type]
+      case SchemaType.String => Decoder[StringSchema.type]
     }
 
     for {
@@ -33,7 +33,7 @@ object Schema {
 @JsonCodec(decodeOnly = true)
 case class ObjectSchema(
   required: Option[NonEmptyList[SchemaName]],
-  properties: Option[NonEmptyMap[SchemaName, Reference.Able[Schema]]]
+  properties: NonEmptyMap[SchemaName, Reference.Able[Schema]]
 ) extends Schema
 
 /**
@@ -47,14 +47,16 @@ case class ArraySchema(
 /**
   * $synthetic
   * */
-@JsonCodec(decodeOnly = true)
-case class NumberSchema() extends Schema
+case object NumberSchema extends Schema {
+  implicit val decoder: Decoder[NumberSchema.type] = Decoder.const(NumberSchema)
+}
 
 /**
   * $synthetic
   * */
-@JsonCodec(decodeOnly = true)
-case class StringSchema() extends Schema
+case object StringSchema extends Schema {
+  implicit val decoder: Decoder[StringSchema.type] = Decoder.const(StringSchema)
+}
 
 /**
   * $synthetic

@@ -35,32 +35,29 @@ class OpenApiParserTest extends BaseTest {
 
       val balanceNodeSchema = ObjectSchema(
         Some(NonEmptyList.of(SchemaName("id"), SchemaName("name"))),
-        Some(
-          NonEmptyMap.of(
-            SchemaName("balance") -> Left(
-              Reference(ReferenceString("#/components/schemas/money"))),
-            SchemaName("id")   -> Right(NumberSchema()),
-            SchemaName("name") -> Right(StringSchema())
-          ))
+        NonEmptyMap.of(
+          SchemaName("balance") -> Left(
+            Reference(ReferenceString("#/components/schemas/money"))),
+          SchemaName("id")   -> Right(NumberSchema),
+          SchemaName("name") -> Right(StringSchema)
+        )
       )
 
       val balanceTreeSchema = ObjectSchema(
         Some(NonEmptyList.of(SchemaName("value"), SchemaName("children"))),
-        Some(
-          NonEmptyMap.of(
-            SchemaName("children") -> Right(ArraySchema(Left(Reference(
-              ReferenceString("#/components/schemas/account-balance-tree"))))),
-            SchemaName("value") -> Left(Reference(
-              ReferenceString("#/components/schemas/account-balance-node")))
-          ))
+        NonEmptyMap.of(
+          SchemaName("children") -> Right(ArraySchema(Left(Reference(
+            ReferenceString("#/components/schemas/account-balance-tree"))))),
+          SchemaName("value") -> Left(Reference(
+            ReferenceString("#/components/schemas/account-balance-node")))
+        )
       )
 
       val balanceListSchema = ObjectSchema(
         Some(NonEmptyList.one(SchemaName("children"))),
-        Some(
-          NonEmptyMap.of(
-            SchemaName("children") -> Right(ArraySchema(Left(Reference(
-              ReferenceString("#/components/schemas/account-balance-tree")))))))
+        NonEmptyMap.of(
+          SchemaName("children") -> Right(ArraySchema(Left(Reference(
+            ReferenceString("#/components/schemas/account-balance-tree"))))))
       )
 
       val components = Components(
@@ -68,7 +65,7 @@ class OpenApiParserTest extends BaseTest {
           SchemaName("account-balance-node") -> Right(balanceNodeSchema),
           SchemaName("account-balance-tree") -> Right(balanceTreeSchema),
           SchemaName("account-balances")     -> Right(balanceListSchema),
-          SchemaName("money")                -> Right(NumberSchema())
+          SchemaName("money")                -> Right(NumberSchema)
         ))
 
       val expected =
