@@ -13,3 +13,5 @@ paths:
       responses:
         405:
           description: Invalid input
+#  /users:
+#    $ref: 'users/types.yml#/user'

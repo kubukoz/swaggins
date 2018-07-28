@@ -8,10 +8,12 @@ The idea is to generate client/server code for Scala backends written with http4
 
 Swaggins borrows heavily from similar tools, most notably [API Builder](https://apibuilder.io/), but with some key differences:
 
-- the spec is independently hosted (e.g. on GitHub)
-- the spec file is passed as a path when running the CLI tool, or hardcoded in the config file
-- the spec format is OpenApi 3.0.x
-- the CLI runs without a server
+                  |Apibuilder | Swaggins
+------------------|-----------|-----------------
+Spec hosting      | Remote    | Local or remote
+Generator hosting | Remote    | Local
+Spec format       | Custom    | Standard (OpenApi)
+Execution         | Remote    | Local (CLI)
 
 and more.
 
@@ -20,7 +22,7 @@ Roadmap:
 - http4s server generator
 - axios client generator
 - android (retrofit) client generator
-- ???
+- http4s client generator
 
 ## Packaging
 `sbt stage` for getting a raw binary, `sbt universal:packageBin` for zipfile
