@@ -2,6 +2,7 @@ package swaggins.config
 
 import cats.data.NonEmptyList
 import cats.implicits._
+import io.circe.DecodingFailure
 import monix.eval.Coeval
 import swaggins.BaseTest
 import swaggins.config.error.UnknownSourcesException
@@ -41,6 +42,13 @@ class SwagginsConfigReaderTest extends BaseTest {
 
     "parse the first example" in {
       reader.read(path).value shouldBe parsed
+    }
+
+    "fail if a source's URIs are empty" in {
+      reader
+        .read(filePath("/empty-source-uris.json"))
+        .failed
+        .value shouldBe a[DecodingFailure]
     }
 
     "get the first example" in {
