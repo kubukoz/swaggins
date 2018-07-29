@@ -1,7 +1,7 @@
 package swaggins.openapi.model.shared
 
 import cats.Show
-import cats.data.NonEmptyList
+import cats.data.{NonEmptyList, NonEmptyMap}
 import cats.implicits._
 import enumeratum._
 import io.circe._
@@ -9,6 +9,7 @@ import io.circe.generic.JsonCodec
 import swaggins.openapi.model.components.SchemaName
 import swaggins.openapi.model.shared.Reference.Able
 import swaggins.core.implicits._
+
 import scala.collection.immutable
 
 sealed trait Schema extends Product with Serializable
@@ -32,7 +33,8 @@ object Schema {
 }
 
 case class CompositeSchema(schemas: NonEmptyList[Reference.Able[Schema]],
-                           kind: CompositeSchemaKind)
+                           kind: CompositeSchemaKind,
+                           discriminator: Option[Discriminator])
     extends Schema
 
 object CompositeSchema {
@@ -53,11 +55,12 @@ object CompositeSchema {
 
   private object decoding {
 
-    val schemasDecoder: Decoder[NonEmptyList[Able[Schema]]] =
-      Decoder[NonEmptyList[Able[Schema]]]
-
     private val schemaKinds: Map[String, CompositeSchemaKind] =
       CompositeSchemaKind.namesToValuesMap
+
+    def schemasDecoder(
+      kind: CompositeSchemaKind): Decoder[NonEmptyList[Able[Schema]]] =
+      Decoder[NonEmptyList[Able[Schema]]].prepare(_.downField(kind.entryName))
 
     def findKind(obj: JsonObject): Either[String, CompositeSchemaKind] = {
       import util._
@@ -73,12 +76,19 @@ object CompositeSchema {
   implicit val decoder: Decoder[CompositeSchema] = {
     import decoding._
 
+    val discriminatorDecoder =
+      Decoder.decodeOption[Discriminator].prepare(_.downField("discriminator"))
+
     for {
-      kind    <- Decoder.decodeJsonObject.emap(decoding.findKind)
-      schemas <- schemasDecoder.prepare(_.downField(kind.entryName))
-    } yield CompositeSchema(schemas, kind)
+      kind                     <- Decoder.decodeJsonObject.emap(decoding.findKind)
+      (schemas, discriminator) <- (schemasDecoder(kind), discriminatorDecoder).tupled
+    } yield CompositeSchema(schemas, kind, discriminator)
   }
 }
+
+@JsonCodec(decodeOnly = true)
+case class Discriminator(propertyName: Option[SchemaName],
+                         mapping: Option[NonEmptyMap[String, SchemaName]])
 
 /**
   * $synthetic

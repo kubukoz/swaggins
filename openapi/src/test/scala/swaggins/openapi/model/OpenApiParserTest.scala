@@ -100,7 +100,8 @@ class OpenApiParserTest extends BaseTest {
         Right(
           CompositeSchema(data.NonEmptyList.of(Left(componentRef("pet")),
                                                Left(componentRef("strnum"))),
-                          CompositeSchemaKind.AnyOf)))
+                          CompositeSchemaKind.AnyOf,
+                          None)))
 
       val getPetOperation = Operation(
         Responses(
@@ -114,11 +115,16 @@ class OpenApiParserTest extends BaseTest {
 
       val strNumSchema = CompositeSchema(
         NonEmptyList.of(Right(StringSchema), Right(NumberSchema)),
-        CompositeSchemaKind.OneOf)
+        CompositeSchemaKind.OneOf,
+        None)
 
       val petSchema = CompositeSchema(
         NonEmptyList.of(Left(componentRef("cat")), Left(componentRef("dog"))),
-        CompositeSchemaKind.OneOf)
+        CompositeSchemaKind.OneOf,
+        Some(
+          Discriminator(Some(SchemaName("petType")),
+                        Some(NonEmptyMap.of("cat_type" -> SchemaName("cat")))))
+      )
 
       val catSchema = ObjectSchema(
         None,
@@ -126,9 +132,12 @@ class OpenApiParserTest extends BaseTest {
           Property(SchemaName("huntingSkill"), Right(StringSchema))))
 
       val dogSchema =
-        CompositeSchema(NonEmptyList.of(Left(componentRef("husky")),
-                                        Left(componentRef("york"))),
-                        CompositeSchemaKind.OneOf)
+        CompositeSchema(
+          NonEmptyList.of(Left(componentRef("husky")),
+                          Left(componentRef("york"))),
+          CompositeSchemaKind.OneOf,
+          Some(Discriminator(Some(SchemaName("dogType")), None))
+        )
 
       val huskySchema = ObjectSchema(
         None,
