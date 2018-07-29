@@ -1,12 +1,14 @@
 package swaggins.openapi.model.shared
 
+import cats.Show
 import cats.data.NonEmptyList
 import cats.implicits._
 import enumeratum._
-import io.circe.generic.JsonCodec
 import io.circe._
+import io.circe.generic.JsonCodec
 import swaggins.openapi.model.components.SchemaName
-
+import swaggins.openapi.model.shared.Reference.Able
+import swaggins.core.implicits._
 import scala.collection.immutable
 
 sealed trait Schema extends Product with Serializable
@@ -20,11 +22,76 @@ object Schema {
       case SchemaType.String => Decoder[StringSchema.type]
     }
 
-    for {
+    val byType = for {
       tpe    <- Decoder[SchemaType].prepare(_.downField("type"))
       schema <- decoders(tpe).widen[Schema]
     } yield schema
+
+    byType.or(Decoder[CompositeSchema].widen[Schema])
   }
+}
+
+case class CompositeSchema(schemas: List[Reference.Able[Schema]],
+                           kind: CompositeSchemaKind)
+    extends Schema
+
+object CompositeSchema {
+  private object util {
+
+    def notOne[T: Show](actual: List[T], allowed: Traversable[T]): String = {
+      val actualString: String =
+        if (actual.isEmpty) "none" else show"${actual.mkString(",")}"
+
+      s"Must be exactly one of: ${allowed.mkString(", ")}, found $actualString"
+    }
+
+    def onlyOrAll[T](list: List[T]): Either[List[T], T] = list match {
+      case h :: Nil => Right(h)
+      case _        => Left(list)
+    }
+  }
+
+  private object decoding {
+
+    val schemasDecoder: Decoder[List[Able[Schema]]] =
+      Decoder[List[Able[Schema]]]
+    private val schemaKinds: Map[String, CompositeSchemaKind] =
+      CompositeSchemaKind.namesToValuesMap
+
+    def findKind(obj: JsonObject): Either[String, CompositeSchemaKind] = {
+      import util._
+
+      val presentKinds = obj.keys.flatMap(schemaKinds.get).toList
+
+      onlyOrAll(presentKinds)
+        .leftMap(_.map(_.entryName))
+        .leftMap(notOne(_, schemaKinds.keySet))
+    }
+  }
+
+  implicit val decoder: Decoder[CompositeSchema] = {
+    import decoding._
+
+    for {
+      kind    <- Decoder.decodeJsonObject.emap(decoding.findKind)
+      schemas <- schemasDecoder.prepare(_.downField(kind.entryName))
+    } yield CompositeSchema(schemas, kind)
+  }
+}
+
+/**
+  * $synthetic
+  * */
+sealed abstract class CompositeSchemaKind(name: String) extends EnumEntry {
+  override def entryName: String = super.entryName.lowerHead
+}
+
+object CompositeSchemaKind extends Enum[CompositeSchemaKind] {
+  override def values: immutable.IndexedSeq[CompositeSchemaKind] = findValues
+
+  case object OneOf extends CompositeSchemaKind("oneOf")
+  case object AnyOf extends CompositeSchemaKind("anyOf")
+  case object AllOf extends CompositeSchemaKind("allOf")
 }
 
 /**
@@ -55,14 +122,10 @@ object ObjectSchema {
       }
 
     def decodeObject(obj: JsonObject): Decoder.Result[NonEmptyList[U]] = {
-      obj.asRight
-        .flatMap(toNel)
-        .flatMap(_.traverse(decodeProperty.tupled))
+      obj.asRight.flatMap(toNel).flatMap(_.traverse(decodeProperty.tupled))
     }
 
-    Decoder[Json]
-      .emap(_.asObject.toRight("Must be an object"))
-      .emapTry(decodeObject(_).toTry)
+    Decoder.decodeJsonObject.emapTry(decodeObject(_).toTry)
   }
 
   implicit val propNelDecoder: Decoder[NonEmptyList[Property]] = {

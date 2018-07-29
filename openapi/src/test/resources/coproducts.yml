@@ -1,0 +1,60 @@
+openapi: "3.0.1"
+info:
+  version: "1.0.0"
+  title: "Swagger Petstore"
+paths:
+  /pet:
+    get:
+      responses:
+        200:
+          description: "ok"
+          content:
+            application/json:
+              schema:
+                type: "array"
+                items:
+                  anyOf:
+                  - $ref: '#/components/schemas/pet'
+                  - $ref: '#/components/schemas/strnum'
+components:
+  schemas:
+    strnum:
+      oneOf:
+      - type: string
+      - type: number
+    pet:
+      type: object
+      discriminator:
+        propertyName: petType
+        mapping:
+          cat_type: cat
+      oneOf:
+      - $ref: '#/components/schemas/cat'
+      - $ref: '#/components/schemas/dog'
+    cat:
+      type: object
+      properties:
+        huntingSkill:
+          type: string
+          description: The measured skill for hunting
+          enum:
+          - clueless
+          - lazy
+          - adventurous
+          - aggressive
+    dog:
+      discriminator:
+        propertyName: dogType
+      oneOf:
+      - $ref: '#/components/schemas/husky'
+      - $ref: '#/components/schemas/york'
+    husky:
+      type: object
+      properties:
+        woof:
+          type: string
+    york:
+      type: object
+      properties:
+        woof:
+          type: string

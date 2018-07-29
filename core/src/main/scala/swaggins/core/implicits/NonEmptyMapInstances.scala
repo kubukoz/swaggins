@@ -1,4 +1,4 @@
-package swaggins.core.instances
+package swaggins.core.implicits
 import cats.data.NonEmptyMap
 import cats.implicits._
 import cats.kernel.Order

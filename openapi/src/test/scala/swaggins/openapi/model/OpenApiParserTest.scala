@@ -12,9 +12,9 @@ import swaggins.openapi.model.shared._
 
 class OpenApiParserTest extends BaseTest {
   "the parser" should {
-    "parse the sample spec" in {
-      val parser: OpenApiParser[Coeval] = new OpenApiParser[Coeval]
+    val parser: OpenApiParser[Coeval] = new OpenApiParser[Coeval]
 
+    "parse the sample spec" in {
       val getBalanceOperation = {
         val jsonResponse = NonEmptyMap.of(
           ContentType("application/json") -> MediaType(Some(Left(Reference(
@@ -94,6 +94,10 @@ class OpenApiParserTest extends BaseTest {
 
       parser.parse(filePath("/parsing-works.yml")).value shouldBe expected
       Experiment.gen(expected).foreach(println)
+    }
+
+    "parse the coproducts spec" in {
+      println(parser.parse(filePath("/coproducts.yml")).value)
     }
   }
 }
