@@ -98,6 +98,7 @@ class OpenApiParserTest extends BaseTest {
 
     "parse the coproducts spec" in {
       println(parser.parse(filePath("/coproducts.yml")).value)
+      pending
     }
   }
 }
