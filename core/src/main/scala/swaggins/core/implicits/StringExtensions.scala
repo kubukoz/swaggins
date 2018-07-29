@@ -6,6 +6,7 @@ trait StringExtensions {
 }
 
 class StringOps(private val s: String) extends AnyVal {
+
   /**
     * Lowercases the string's head, leaves everything else unchanged
     * */

@@ -23,7 +23,6 @@ components:
       - type: string
       - type: number
     pet:
-      type: object
       discriminator:
         propertyName: petType
         mapping:
@@ -36,7 +35,6 @@ components:
       properties:
         huntingSkill:
           type: string
-          description: The measured skill for hunting
           enum:
           - clueless
           - lazy
@@ -48,6 +46,8 @@ components:
       oneOf:
       - $ref: '#/components/schemas/husky'
       - $ref: '#/components/schemas/york'
+    dog2:
+      $ref: '#/components/schemas/dog'
     husky:
       type: object
       properties:

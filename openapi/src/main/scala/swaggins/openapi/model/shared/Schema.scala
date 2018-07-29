@@ -31,7 +31,7 @@ object Schema {
   }
 }
 
-case class CompositeSchema(schemas: List[Reference.Able[Schema]],
+case class CompositeSchema(schemas: NonEmptyList[Reference.Able[Schema]],
                            kind: CompositeSchemaKind)
     extends Schema
 
@@ -53,8 +53,9 @@ object CompositeSchema {
 
   private object decoding {
 
-    val schemasDecoder: Decoder[List[Able[Schema]]] =
-      Decoder[List[Able[Schema]]]
+    val schemasDecoder: Decoder[NonEmptyList[Able[Schema]]] =
+      Decoder[NonEmptyList[Able[Schema]]]
+
     private val schemaKinds: Map[String, CompositeSchemaKind] =
       CompositeSchemaKind.namesToValuesMap
 
