@@ -11,7 +11,7 @@ object Reference {
   //a reference-able type.
   type Able[T] = Either[Reference, T]
 
-  implicit def decoder[T: Decoder]: Decoder[Reference.Able[T]] =
+  implicit def decoder[T: Decoder]: Decoder[Able[T]] =
     Decoder[Reference].either(Decoder[T])
 }
 

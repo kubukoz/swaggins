@@ -9,7 +9,7 @@ sealed trait TypeInfo {
 }
 
 case class CaseClassField(name: String, tpe: String, required: Boolean) {
-  val typeString = if(required) tpe else s"Option[$tpe]"
+  val typeString                = if (required) tpe else s"Option[$tpe]"
   override def toString: String = s"""$name: $typeString"""
 }
 
@@ -38,25 +38,30 @@ object Experiment {
         CaseClass(
           toCamel(name.value),
           properties.toList.map { prop =>
-            val isRequired = required.forall(_.exists(_.value == prop.name.value))
+            val isRequired =
+              required.forall(_.exists(_.value == prop.name.value))
             prop.schema match {
               case Left(ref) =>
-                CaseClassField(prop.name.value, referenceString(ref), isRequired)
+                CaseClassField(prop.name.value,
+                               referenceString(ref),
+                               isRequired)
               case Right(tpe) =>
-                CaseClassField(prop.name.value, typeString(tpe)(name.value), isRequired)
+                CaseClassField(prop.name.value,
+                               typeString(tpe)(name.value),
+                               isRequired)
             }
           }
         )
-      case (name, Right(NumberSchema)) =>
+      case (name, Right(_: NumberSchema)) =>
         CaseClass(
           toCamel(name.value),
-          List(CaseClassField("value", "Int", true)),
+          List(CaseClassField("value", "Int", required = true)),
           List("AnyVal")
         )
-      case (name, Right(StringSchema)) =>
+      case (name, Right(_: StringSchema)) =>
         CaseClass(
           toCamel(name.value),
-          List(CaseClassField("value", "Int", true)),
+          List(CaseClassField("value", "Int", required = true)),
           List("AnyVal")
         )
       case _ => ???
@@ -67,16 +72,12 @@ object Experiment {
     case ObjectSchema(_, _) => s"${parent}SyntheticChild1"
     case ArraySchema(items) =>
       s"List[${items.fold(referenceString, typeString)}]"
-    case NumberSchema => "Int"
-    case StringSchema => "String"
+    case _: NumberSchema => "Int"
+    case _: StringSchema => "String"
   }
 
   def toCamel(s: String): String = {
-    s.split("-")
-      .toList
-      .map { s => s.head.toUpper + s.tail.toLowerCase
-      }
-      .mkString
+    s.split("-").toList.map(s => s.head.toUpper + s.tail.toLowerCase).mkString
   }
 
   def referenceString(ref: Reference): String =

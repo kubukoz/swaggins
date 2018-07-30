@@ -1,8 +1,9 @@
 package swaggins.config.error
-import cats.data.NonEmptyList
+import cats.data.NonEmptySet
+import cats.implicits._
 import swaggins.config.model.shared.SourceIdentifier
 
-case class UnknownSourcesException(sources: NonEmptyList[SourceIdentifier])
+case class UnknownSourcesException(sources: NonEmptySet[SourceIdentifier])
     extends ConfigValidationException {
 
   override val getMessage: String = {

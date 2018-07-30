@@ -6,9 +6,14 @@ Swaggins is an opinionated code generator for [OpenAPI](https://github.com/OAI/O
 
 The idea is to generate client/server code for Scala backends written with http4s, fs2 and circe.
 
+## Limitations
+- JSON only, no support for XML (because it's 2018)
+
+## Inspiration
+
 Swaggins borrows heavily from similar tools, most notably [API Builder](https://apibuilder.io/), but with some key differences:
 
-                  |Apibuilder | Swaggins
+-                 |Apibuilder | Swaggins
 ------------------|-----------|-----------------
 Spec hosting      | Remote    | Local or remote
 Generator hosting | Remote    | Local

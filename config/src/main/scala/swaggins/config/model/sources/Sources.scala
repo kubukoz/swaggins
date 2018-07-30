@@ -19,10 +19,12 @@ object Sources {
 
 case class SourceUri(scheme: SourceScheme, path: String)
 
-sealed abstract class SourceScheme(override val entryName: String)
+sealed abstract class SourceScheme(name: String)
     extends EnumEntry
     with Product
-    with Serializable
+    with Serializable {
+  override def entryName: String = name
+}
 
 object SourceScheme extends Enum[SourceScheme] {
 
