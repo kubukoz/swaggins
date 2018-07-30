@@ -22,27 +22,21 @@ class OpenApiParserTest extends BaseTest {
 
     "parse the sample spec" in {
       val getBalanceOperation = {
-        val jsonResponse = NonEmptyMap.of(
-          ContentType("application/json") -> MediaType(
-            Some(Left(componentRef("account-balances")))))
+        val balanceContent =
+          Content(MediaType(Some(Left(componentRef("account-balances")))))
 
         Operation(
           Responses(
-            NonEmptyMap.of(StatusCode(200) -> Response(Some(jsonResponse)))))
+            NonEmptyMap.of(StatusCode(200) -> Response(Some(balanceContent)))))
       }
 
       val balancePath = PathItem(NonEmptyMap.of(Get -> getBalanceOperation))
 
       val postTransactionsOperation = Operation(
         Responses(
-          NonEmptyMap.of(
-            StatusCode(200) -> Response(
-              Some(
-                NonEmptyMap.of(
-                  ContentType("application/json") -> MediaType(
-                    Some(Right(NumberSchema)))
-                )
-              )))))
+          NonEmptyMap.of(StatusCode(200) -> Response(Some(
+            Content(MediaType(Some(Right(NumberSchema))))
+          )))))
 
       val transactionsPath =
         PathItem(NonEmptyMap.of(Post -> postTransactionsOperation))
@@ -103,11 +97,11 @@ class OpenApiParserTest extends BaseTest {
                           CompositeSchemaKind.AnyOf,
                           None)))
 
+      val petsContent = Content(MediaType(Some(Right(getPetSchema))))
+
       val getPetOperation = Operation(
         Responses(
-          NonEmptyMap.of(
-            StatusCode(200) -> Response(Some(NonEmptyMap.of(ContentType(
-              "application/json") -> MediaType(Some(Right(getPetSchema)))))))))
+          NonEmptyMap.of(StatusCode(200) -> Response(Some(petsContent)))))
 
       val paths = Paths(
         NonEmptySet.of(

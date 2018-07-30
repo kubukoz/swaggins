@@ -81,18 +81,14 @@ object StatusCode {
 }
 
 @JsonCodec(decodeOnly = true)
-case class Response(content: Option[NonEmptyMap[ContentType, MediaType]])
+case class Response(content: Option[Content])
 
 /**
   * $synthetic
   * */
-case class ContentType(value: String) extends AnyVal
-
-object ContentType {
-  implicit val order: Order[ContentType] = Order.by(_.value)
-
-  implicit val decoder: KeyDecoder[ContentType] =
-    KeyDecoder.instance(apply(_).some)
+case class Content(json: MediaType) extends AnyVal
+object Content {
+  implicit val decoder: Decoder[Content] = Decoder[MediaType].prepare(_.downField("application/json")).map(apply)
 }
 
 @JsonCodec(decodeOnly = true)
