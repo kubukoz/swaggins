@@ -13,12 +13,12 @@ The idea is to generate client/server code for Scala backends written with http4
 
 Swaggins borrows heavily from similar tools, most notably [API Builder](https://apibuilder.io/), but with some key differences:
 
--                 |Apibuilder | Swaggins
-------------------|-----------|-----------------
-Spec hosting      | Remote    | Local or remote
-Generator hosting | Remote    | Local
-Spec format       | Custom    | Standard (OpenApi)
-Execution         | Remote    | Local (CLI)
+|                  |Apibuilder | Swaggins
+|------------------|-----------|-----------------
+|Spec hosting      | Remote    | Local or remote
+|Generator hosting | Remote    | Local
+|Spec format       | Custom    | Standard (OpenApi)
+|Execution         | Remote    | Local (CLI)
 
 and more.
 
