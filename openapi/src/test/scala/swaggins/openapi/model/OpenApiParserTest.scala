@@ -35,7 +35,7 @@ class OpenApiParserTest extends BaseTest {
       val postTransactionsOperation = Operation(
         Responses(
           NonEmptyMap.of(StatusCode(200) -> Response(Some(
-            Content(MediaType(Some(Right(NumberSchema))))
+            Content(MediaType(Some(Right(NumberSchema(None)))))
           )))))
 
       val transactionsPath =
@@ -46,16 +46,16 @@ class OpenApiParserTest extends BaseTest {
                        Path("/transactions", transactionsPath)))
 
       val balanceNodeSchema = ObjectSchema(
-        Some(NonEmptyList.of(SchemaName("id"), SchemaName("name"))),
+        Some(NonEmptySet.of(SchemaName("id"), SchemaName("name"))),
         NonEmptyList.of(
-          Property(SchemaName("id"), Right(NumberSchema)),
-          Property(SchemaName("name"), Right(StringSchema)),
+          Property(SchemaName("id"), Right(NumberSchema(None))),
+          Property(SchemaName("name"), Right(StringSchema(None))),
           Property(SchemaName("balance"), Left(componentRef("money")))
         )
       )
 
       val balanceTreeSchema = ObjectSchema(
-        Some(NonEmptyList.of(SchemaName("value"), SchemaName("children"))),
+        Some(NonEmptySet.of(SchemaName("value"), SchemaName("children"))),
         NonEmptyList.of(
           Property(SchemaName("value"),
                    Left(componentRef("account-balance-node"))),
@@ -66,7 +66,7 @@ class OpenApiParserTest extends BaseTest {
       )
 
       val balanceListSchema = ObjectSchema(
-        Some(NonEmptyList.one(SchemaName("children"))),
+        Some(NonEmptySet.one(SchemaName("children"))),
         NonEmptyList.of(
           Property(
             SchemaName("children"),
@@ -79,7 +79,7 @@ class OpenApiParserTest extends BaseTest {
           SchemaName("account-balance-node") -> Right(balanceNodeSchema),
           SchemaName("account-balance-tree") -> Right(balanceTreeSchema),
           SchemaName("account-balances")     -> Right(balanceListSchema),
-          SchemaName("money")                -> Right(NumberSchema)
+          SchemaName("money")                -> Right(NumberSchema(None))
         ))
 
       val expected =
@@ -108,7 +108,7 @@ class OpenApiParserTest extends BaseTest {
           Path("/pet", PathItem(NonEmptyMap.of(Get -> getPetOperation)))))
 
       val strNumSchema = CompositeSchema(
-        NonEmptyList.of(Right(StringSchema), Right(NumberSchema)),
+        NonEmptyList.of(Right(StringSchema(None)), Right(NumberSchema(None))),
         CompositeSchemaKind.OneOf,
         None)
 
@@ -120,10 +120,13 @@ class OpenApiParserTest extends BaseTest {
                         Some(NonEmptyMap.of("cat_type" -> SchemaName("cat")))))
       )
 
+      val huntingSkillSchema = StringSchema(
+        Some(NonEmptySet.of("clueless", "lazy", "adventurous", "aggressive")))
+
       val catSchema = ObjectSchema(
         None,
         NonEmptyList.of(
-          Property(SchemaName("huntingSkill"), Right(StringSchema))))
+          Property(SchemaName("huntingSkill"), Right(huntingSkillSchema))))
 
       val dogSchema =
         CompositeSchema(
@@ -133,9 +136,10 @@ class OpenApiParserTest extends BaseTest {
           Some(Discriminator(Some(SchemaName("dogType")), None))
         )
 
-      val huskySchema = ObjectSchema(
-        None,
-        NonEmptyList.of(Property(SchemaName("woof"), Right(StringSchema))))
+      val huskySchema =
+        ObjectSchema(None,
+                     NonEmptyList.of(
+                       Property(SchemaName("woof"), Right(StringSchema(None)))))
 
       val yorkSchema = huskySchema
 

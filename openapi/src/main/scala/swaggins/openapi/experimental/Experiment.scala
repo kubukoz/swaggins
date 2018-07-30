@@ -52,13 +52,13 @@ object Experiment {
             }
           }
         )
-      case (name, Right(NumberSchema)) =>
+      case (name, Right(_: NumberSchema)) =>
         CaseClass(
           toCamel(name.value),
           List(CaseClassField("value", "Int", required = true)),
           List("AnyVal")
         )
-      case (name, Right(StringSchema)) =>
+      case (name, Right(_: StringSchema)) =>
         CaseClass(
           toCamel(name.value),
           List(CaseClassField("value", "Int", required = true)),
@@ -72,8 +72,8 @@ object Experiment {
     case ObjectSchema(_, _) => s"${parent}SyntheticChild1"
     case ArraySchema(items) =>
       s"List[${items.fold(referenceString, typeString)}]"
-    case NumberSchema => "Int"
-    case StringSchema => "String"
+    case _: NumberSchema => "Int"
+    case _: StringSchema => "String"
   }
 
   def toCamel(s: String): String = {

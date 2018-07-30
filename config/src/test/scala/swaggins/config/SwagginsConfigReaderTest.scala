@@ -1,7 +1,6 @@
 package swaggins.config
 
-import cats.data.NonEmptyList
-import cats.data._
+import cats.data.{NonEmptyList, _}
 import io.circe.DecodingFailure
 import monix.eval.Coeval
 import swaggins.BaseTest
@@ -78,8 +77,7 @@ class SwagginsConfigReaderTest extends BaseTest {
         .failed
         .value
         .asInstanceOf[UnknownSourcesException]
-        .sources shouldBe NonEmptyList.of(
-        SourceIdentifier("kubukoz/hyze-spec2"))
+        .sources shouldBe NonEmptySet.of(SourceIdentifier("kubukoz/hyze-spec2"))
 
     }
   }

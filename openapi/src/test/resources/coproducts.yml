@@ -35,7 +35,6 @@ components:
       properties:
         huntingSkill:
           type: string
-#          todo enum
           enum:
           - clueless
           - lazy

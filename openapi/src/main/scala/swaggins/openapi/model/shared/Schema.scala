@@ -1,14 +1,15 @@
 package swaggins.openapi.model.shared
 
 import cats.Show
-import cats.data.{NonEmptyList, NonEmptyMap}
+import cats.data.{NonEmptyList, NonEmptyMap, NonEmptySet}
 import cats.implicits._
+import cats.kernel.Order
 import enumeratum._
 import io.circe._
 import io.circe.generic.JsonCodec
+import swaggins.core.implicits._
 import swaggins.openapi.model.components.SchemaName
 import swaggins.openapi.model.shared.Reference.Able
-import swaggins.core.implicits._
 
 import scala.collection.immutable
 
@@ -19,8 +20,8 @@ object Schema {
     val decoders: SchemaType => Decoder[_ <: Schema] = {
       case SchemaType.Object => Decoder[ObjectSchema]
       case SchemaType.Array  => Decoder[ArraySchema]
-      case SchemaType.Number => Decoder[NumberSchema.type]
-      case SchemaType.String => Decoder[StringSchema.type]
+      case SchemaType.Number => Decoder[NumberSchema]
+      case SchemaType.String => Decoder[StringSchema]
     }
 
     val byType = for {
@@ -110,7 +111,7 @@ object CompositeSchemaKind extends Enum[CompositeSchemaKind] {
   * */
 @JsonCodec(decodeOnly = true)
 case class ObjectSchema(
-  required: Option[NonEmptyList[SchemaName]],
+  required: Option[NonEmptySet[SchemaName]],
   properties: NonEmptyList[Property]
 ) extends Schema
 
@@ -158,19 +159,23 @@ case class ArraySchema(
   items: Reference.Able[Schema]
 ) extends Schema
 
-/**
-  * $synthetic
-  * */
-case object NumberSchema extends Schema {
-  implicit val decoder: Decoder[NumberSchema.type] = Decoder.const(NumberSchema)
+trait PrimitiveSchema[Literal] extends Schema {
+  def enum: Option[NonEmptySet[Literal]]
 }
 
 /**
   * $synthetic
   * */
-case object StringSchema extends Schema {
-  implicit val decoder: Decoder[StringSchema.type] = Decoder.const(StringSchema)
-}
+@JsonCodec(decodeOnly = true)
+case class NumberSchema(enum: Option[NonEmptySet[Double]])
+    extends PrimitiveSchema[Double]
+
+/**
+  * $synthetic
+  * */
+@JsonCodec(decodeOnly = true)
+case class StringSchema(enum: Option[NonEmptySet[String]])
+    extends PrimitiveSchema[String]
 
 /**
   * $synthetic

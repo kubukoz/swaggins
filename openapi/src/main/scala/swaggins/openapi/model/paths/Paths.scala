@@ -87,8 +87,10 @@ case class Response(content: Option[Content])
   * $synthetic
   * */
 case class Content(json: MediaType) extends AnyVal
+
 object Content {
-  implicit val decoder: Decoder[Content] = Decoder[MediaType].prepare(_.downField("application/json")).map(apply)
+  implicit val decoder: Decoder[Content] =
+    Decoder[MediaType].prepare(_.downField("application/json")).map(apply)
 }
 
 @JsonCodec(decodeOnly = true)
