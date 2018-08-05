@@ -3,7 +3,6 @@ package swaggins.openapi.model.shared
 import cats.Show
 import cats.data.{NonEmptyList, NonEmptyMap, NonEmptySet}
 import cats.implicits._
-import cats.kernel.Order
 import enumeratum._
 import io.circe._
 import io.circe.generic.JsonCodec

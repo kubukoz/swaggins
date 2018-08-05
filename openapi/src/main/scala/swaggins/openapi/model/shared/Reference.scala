@@ -1,11 +1,14 @@
 package swaggins.openapi.model.shared
 
+import cats.data.NonEmptyList
 import io.circe.Decoder
 import io.circe.generic.JsonCodec
 import io.circe.generic.extras.semiauto._
+import swaggins.openapi.model.components.SchemaName
+import cats.implicits._
 
 @JsonCodec(decodeOnly = true)
-case class Reference(`$ref`: ReferenceString)
+case class Reference(`$ref`: ReferenceRef)
 
 object Reference {
   //a reference-able type.
@@ -13,13 +16,33 @@ object Reference {
 
   implicit def decoder[T: Decoder]: Decoder[Able[T]] =
     Decoder[Reference].either(Decoder[T])
+
 }
 
 /**
   * $synthetic
   * */
-case class ReferenceString(value: String) extends AnyVal
+sealed trait ReferenceRef extends Product with Serializable
 
-object ReferenceString {
-  implicit val decoder: Decoder[ReferenceString] = deriveUnwrappedDecoder
+object ReferenceRef {
+  case class ComponentRef(name: SchemaName) extends ReferenceRef
+
+  object ComponentRef {
+    implicit val decoder: Decoder[ComponentRef] = {
+      val pattern = """\#\/components\/schemas\/(.+)""".r
+
+      Decoder[String].emap {
+        case pattern(name) => ComponentRef(SchemaName(name)).asRight
+        case str           => s"Invalid component reference: $str".asLeft
+      }
+    }
+  }
+
+  implicit val decoder: Decoder[ReferenceRef] =
+    NonEmptyList
+      .of(
+        Decoder[ComponentRef].widen[ReferenceRef]
+      )
+      .reduceK
+
 }

@@ -15,7 +15,7 @@ import cats.implicits._
 class OpenApiParserTest extends BaseTest {
 
   def componentRef(name: String): Reference =
-    Reference(ReferenceString(show"#/components/schemas/$name"))
+    Reference(ReferenceRef.ComponentRef(SchemaName(name)))
 
   "the parser" should {
     val parser: OpenApiParser[Coeval] = new OpenApiParser[Coeval]
@@ -86,7 +86,7 @@ class OpenApiParserTest extends BaseTest {
         OpenAPI("3.0.1", Info("1.0.0", "My example project"), paths, components)
 
       parser.parse(filePath("/parsing-works.yml")).value shouldBe expected
-      Experiment.gen(expected).foreach(println)
+//      Experiment.gen(expected).foreach(println)
     }
 
     "parse the coproducts spec" in {

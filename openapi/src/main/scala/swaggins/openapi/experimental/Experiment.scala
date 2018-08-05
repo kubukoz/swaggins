@@ -80,8 +80,8 @@ object Experiment {
     s.split("-").toList.map(s => s.head.toUpper + s.tail.toLowerCase).mkString
   }
 
-  def referenceString(ref: Reference): String =
-    if (ref.`$ref`.value.startsWith("#/components/schemas/")) {
+  def referenceString(ref: Reference): String = ???
+    /*if (ref.`$ref`.value.startsWith("#/components/schemas/")) {
       val split = ref.`$ref`.value
         .drop("#/components/schemas/".length)
         .split("""/""")
@@ -91,5 +91,5 @@ object Experiment {
         case Nil  => ???
         case list => (list.init :+ toCamel(list.last)).mkString(".")
       }
-    } else ???
+    } else ???*/
 }
