@@ -10,9 +10,36 @@ class StringOps(private val s: String) extends AnyVal {
   /**
     * Lowercases the string's head, leaves everything else unchanged
     * */
-  def lowerHead: String = s.nonEmpty.guard[Option].as(s).foldMap { str =>
-    val (head, tail) = (str.head, str.tail)
+  def lowerHead: String = modHead(_.toLower)
 
-    show"${head.toLower}$tail"
+  /**
+    * Uppercases the string's head, leaves everything else unchanged
+    * */
+  def upperHead: String = modHead(_.toUpper)
+
+  /**
+    * Modifies the head (if present), leaves everything else unchanged.
+    * For empty string it's identity.
+    * */
+  def modHead(f: Char => Char): String = {
+    s.nonEmpty.guard[Option].as(s).foldMap { str =>
+      val (head, tail) = (str.head, str.tail)
+
+      show"${f(head)}$tail"
+    }
+  }
+
+  def toCamelCase: String = {
+    val afterSplit = s.split("\\-").toList
+    afterSplit.foldMap(_.upperHead)
+  }
+
+  def toCamelCaseLower: String = {
+    val afterSplit = s.split("\\-").toList
+    afterSplit match {
+      case h :: t => h.toLowerCase + t.foldMap(_.upperHead)
+      case _      => ""
+    }
+
   }
 }

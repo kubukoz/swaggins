@@ -12,7 +12,8 @@ val commonDeps = Seq(
   simulacrum,
   scalatest,
   decline,
-  monix
+  monix,
+  chimney
 ) ++ circe ++ monocle ++ scalacheck ++ pureconfig ++ fs2 ++ cats
 
 val plugins = List(
@@ -40,11 +41,14 @@ val coreDep = makeDep(core)
 def basic(proj: Project): Project =
   veryBasic(proj).dependsOn(coreDep)
 
-val openapi = basic(project)
+val openapi    = basic(project)
+val openapiDep = makeDep(openapi)
 
 val config = basic(project)
 
-val generator = basic(project).dependsOn(openapi, config)
+val scalaAst = basic(project)
+
+val generator = basic(project).dependsOn(openapiDep, config, scalaAst)
 
 val fetch = basic(project).dependsOn(openapi)
 

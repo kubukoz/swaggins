@@ -15,6 +15,7 @@ object Dependencies {
   val simulacrum = "com.github.mpilquist" %% "simulacrum"     % Versions.simulacrum
   val monix      = "io.monix"             %% "monix"          % Versions.monix
   val decline    = "com.monovore"         %% "decline"        % Versions.decline
+  val chimney    = "io.scalaland"         %% "chimney"        % Versions.chimney
 
   val scalacheck = Seq(
     "com.fortysevendeg"          %% "scalacheck-datetime"       % Versions.scalacheckJava8 % Test,
@@ -81,4 +82,5 @@ object Versions {
   val monocle             = "1.5.0"
   val scalacheckJava8     = "0.2.0"
   val scalacheckShapeless = "1.1.8"
+  val chimney             = "0.2.1"
 }

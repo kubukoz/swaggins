@@ -25,7 +25,8 @@ class Parser(parse: String => Either[Throwable, Json]) {
 }
 
 object Parser {
-  private def readFile[T: Decoder, F[_]: Sync](path: Path): F[String] = {
+
+  def readFile[F[_]: Sync](path: Path): F[String] = {
     fs2.io.file
       .readAll[F](path, 8192)
       .through(text.utf8Decode)

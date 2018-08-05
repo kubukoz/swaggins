@@ -1,7 +1,73 @@
 package swaggins.generator
+import cats.effect.Sync
+import cats.implicits._
+import fs2.Stream
+import swaggins.core.implicits._
 import swaggins.openapi.model.OpenAPI
+import swaggins.openapi.model.components.SchemaName
+import swaggins.openapi.model.shared.Reference.Able
+import swaggins.openapi.model.shared._
+import swaggins.scala.ast
+import swaggins.scala.ast._
+import io.scalaland.chimney.dsl._
+import swaggins.openapi.model.shared.ReferenceRef.ComponentRef
+import swaggins.scala.ast.TypeReference.{ListType, OrdinaryType}
 
 trait Generator[F[_]] {
-  //todo incomplete - needs resolved $ref-s
-  def generate(spec: OpenAPI): fs2.Stream[F, GeneratedFile]
+  def generate(spec: OpenAPI): Stream[F, GeneratedFile]
+}
+
+class ScalaCaseClassGenerator[F[_]: Sync] extends Generator[F] {
+
+  def generate(spec: OpenAPI): Stream[F, GeneratedFile] = {
+    val componentList: List[(SchemaName, Able[Schema])] =
+      spec.components.schemas.toSortedMap.toList
+
+    val componentStrings: Stream[F, String] = Stream
+      .emits(componentList)
+      .map {
+        case (name, Right(schema)) => schemaToModel(name, schema)
+      }
+      .map(_.show)
+
+    Stream.emit(componentStrings).evalMap { fileStream =>
+      fileStream.compile.toList.map { lines =>
+        GeneratedFile("models.scala", lines.mkString_("", "\n", "\n"))
+      }
+    }
+  }
+
+  private def schemaToModel(schemaName: SchemaName,
+                            schema: Schema): ScalaModel = {
+    schema match {
+      case ObjectSchema(required, properties) =>
+        val fields = properties.map { prop =>
+          val isRequired = required.exists(_.apply(prop.name))
+
+          CaseClassField(isRequired,
+                         prop.name.transformInto[FieldName],
+                         refSchemaToType(prop.schema))
+        }
+
+        ast.CaseClass(schemaName.transformInto[TypeName], fields)
+
+      case NumberSchema(None) =>
+        ValueClass(schemaName.transformInto[TypeName],
+                   TypeReference.Primitive.Double)
+    }
+  }
+
+  private def refSchemaToType(schema: Reference.Able[Schema]): TypeReference =
+    schema match {
+      case Left(ref)                 => refToType(ref.`$ref`)
+      case Right(NumberSchema(None)) => TypeReference.Primitive.Double
+      case Right(StringSchema(None)) => TypeReference.Primitive.String
+      case Right(ArraySchema(items)) => ListType(refSchemaToType(items))
+      case Right(_: ObjectSchema) =>
+        ??? //needs to be added as a new synthetic type
+    }
+
+  val refToType: ReferenceRef => OrdinaryType = {
+    case ComponentRef(name) => name.transformInto[OrdinaryType]
+  }
 }
