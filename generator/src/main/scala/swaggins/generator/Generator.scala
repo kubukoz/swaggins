@@ -2,16 +2,15 @@ package swaggins.generator
 import cats.effect.Sync
 import cats.implicits._
 import fs2.Stream
+import io.scalaland.chimney.dsl._
 import swaggins.core.implicits._
 import swaggins.openapi.model.OpenAPI
 import swaggins.openapi.model.components.SchemaName
 import swaggins.openapi.model.shared.Reference.Able
-import swaggins.openapi.model.shared._
-import swaggins.scala.ast
-import swaggins.scala.ast._
-import io.scalaland.chimney.dsl._
 import swaggins.openapi.model.shared.ReferenceRef.ComponentRef
-import swaggins.scala.ast.TypeReference.{ListType, OrdinaryType}
+import swaggins.openapi.model.shared._
+import swaggins.scala.ast.model._
+import swaggins.scala.ast.ref._
 
 trait Generator[F[_]] {
   def generate(spec: OpenAPI): Stream[F, GeneratedFile]
@@ -19,7 +18,7 @@ trait Generator[F[_]] {
 
 class ScalaCaseClassGenerator[F[_]: Sync] extends Generator[F] {
 
-  private val refToType: ReferenceRef => OrdinaryType = {
+  private val refToTypeRef: ReferenceRef => TypeReference = {
     case ComponentRef(name) => name.transformInto[OrdinaryType]
   }
 
@@ -56,19 +55,18 @@ class ScalaCaseClassGenerator[F[_]: Sync] extends Generator[F] {
                          refSchemaToType(prop.schema))
         }
 
-        ast.CaseClass(schemaName.transformInto[TypeName], fields)
+        CaseClass(schemaName.transformInto[TypeName], fields)
 
       case NumberSchema(None) =>
-        ValueClass(schemaName.transformInto[TypeName],
-                   TypeReference.Primitive.Double)
+        ValueClass(schemaName.transformInto[TypeName], Primitive.Double)
     }
   }
 
   private def refSchemaToType(schema: Reference.Able[Schema]): TypeReference =
     schema match {
-      case Left(ref)                 => refToType(ref.`$ref`)
-      case Right(NumberSchema(None)) => TypeReference.Primitive.Double
-      case Right(StringSchema(None)) => TypeReference.Primitive.String
+      case Left(ref)                 => refToTypeRef(ref.`$ref`)
+      case Right(NumberSchema(None)) => Primitive.Double
+      case Right(StringSchema(None)) => Primitive.String
       case Right(ArraySchema(items)) => ListType(refSchemaToType(items))
       case Right(_: ObjectSchema) =>
         ??? //needs to be added as a new synthetic type - most likely change type of method to either and the caller to list

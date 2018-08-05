@@ -1,45 +1,10 @@
-package swaggins.scala.ast
+package swaggins.scala.ast.model
 
 import cats.Show
 import cats.data.NonEmptyList
-import swaggins.core.implicits._
 import cats.implicits._
-import enumeratum.{Enum, EnumEntry}
-
-import scala.collection.immutable
-
-sealed trait TypeReference extends Product with Serializable {
-  def show: String
-}
-
-object TypeReference {
-  implicit val show: Show[TypeReference] = Show.show(_.show)
-
-  case class OrdinaryType(value: String) extends TypeReference {
-    override def show: String = value.toCamelCase
-  }
-
-  case class ListType(itemType: TypeReference) extends TypeReference {
-    override def show: String = show"""List[$itemType]"""
-  }
-
-  object Primitive {
-    object Double extends OrdinaryType("Double")
-    object String extends OrdinaryType("String")
-  }
-}
-
-case class TypeName(value: String) extends AnyVal
-
-object TypeName {
-  implicit val show: Show[TypeName] = Show.show(_.value.toCamelCase)
-}
-
-case class FieldName(value: String) extends AnyVal
-
-object FieldName {
-  implicit val show: Show[FieldName] = Show.show(_.value.toCamelCaseLower)
-}
+import swaggins.core.implicits._
+import swaggins.scala.ast.ref.{TypeName, TypeReference}
 
 sealed trait ScalaModel extends Product with Serializable {
   def show: String
@@ -74,4 +39,10 @@ case class CaseClassField(required: Boolean,
 
 object CaseClassField {
   implicit val show: Show[CaseClassField] = Show.show(_.show)
+}
+
+case class FieldName(value: String) extends AnyVal
+
+object FieldName {
+  implicit val show: Show[FieldName] = Show.show(_.value.toCamelCaseLower)
 }
