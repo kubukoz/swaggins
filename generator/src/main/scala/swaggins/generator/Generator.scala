@@ -19,6 +19,10 @@ trait Generator[F[_]] {
 
 class ScalaCaseClassGenerator[F[_]: Sync] extends Generator[F] {
 
+  private val refToType: ReferenceRef => OrdinaryType = {
+    case ComponentRef(name) => name.transformInto[OrdinaryType]
+  }
+
   def generate(spec: OpenAPI): Stream[F, GeneratedFile] = {
     val componentList: List[(SchemaName, Able[Schema])] =
       spec.components.schemas.toSortedMap.toList
@@ -26,7 +30,7 @@ class ScalaCaseClassGenerator[F[_]: Sync] extends Generator[F] {
     val componentStrings: Stream[F, String] = Stream
       .emits(componentList)
       .map {
-        case (name, Right(schema)) => schemaToModel(name, schema)
+        case (name, Right(schema)) => convertSchema(name, schema)
       }
       .map(_.show)
 
@@ -37,7 +41,10 @@ class ScalaCaseClassGenerator[F[_]: Sync] extends Generator[F] {
     }
   }
 
-  private def schemaToModel(schemaName: SchemaName,
+  /**
+    * Converts an OpenAPI Schema to a Scala model (e.g. a case class or an ADT).
+    * */
+  private def convertSchema(schemaName: SchemaName,
                             schema: Schema): ScalaModel = {
     schema match {
       case ObjectSchema(required, properties) =>
@@ -64,10 +71,6 @@ class ScalaCaseClassGenerator[F[_]: Sync] extends Generator[F] {
       case Right(StringSchema(None)) => TypeReference.Primitive.String
       case Right(ArraySchema(items)) => ListType(refSchemaToType(items))
       case Right(_: ObjectSchema) =>
-        ??? //needs to be added as a new synthetic type
+        ??? //needs to be added as a new synthetic type - most likely change type of method to either and the caller to list
     }
-
-  val refToType: ReferenceRef => OrdinaryType = {
-    case ComponentRef(name) => name.transformInto[OrdinaryType]
-  }
 }

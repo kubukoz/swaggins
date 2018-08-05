@@ -23,6 +23,7 @@ class ScalaModelGeneratorTest extends BaseTest {
                         fileContent("/expected-scala-models.scala"))
         )
 
+//        println(expected.head.content)
         compare(actual, expected)
       }
     }
