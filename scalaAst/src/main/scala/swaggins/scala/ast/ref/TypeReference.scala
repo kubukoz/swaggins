@@ -9,7 +9,7 @@ sealed trait TypeReference extends Product with Serializable {
 }
 
 object TypeReference {
-  implicit val show: Show[TypeReference] = Show.show(_.show)
+  implicit val show: Show[TypeReference] = _.show
 }
 
 case class OrdinaryType(value: String) extends TypeReference {
