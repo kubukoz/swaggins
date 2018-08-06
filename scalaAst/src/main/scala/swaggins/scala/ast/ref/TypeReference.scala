@@ -29,7 +29,7 @@ case class TypeName private (value: String) extends AnyVal
 
 object TypeName {
   def parse(value: String): TypeName = TypeName(value.toCamelCase)
-  def raw(value: String): TypeName = TypeName(value)
+  def raw(value: String): TypeName   = TypeName(value)
 
   implicit val show: Show[TypeName] = Show.show(_.value)
 }

@@ -29,7 +29,7 @@ object Converters {
                                 CaseClassField(required = true,
                                                FieldName("value"),
                                                refToTypeRef(ref.`$ref`))),
-                              ExtendsClauses.empty)
+                              ExtendsClause.empty)
 
         NonEmptyList.of(alias)
     }
@@ -60,7 +60,7 @@ object Converters {
         val fields = fieldsWithModels.map(_._1)
         val models = fieldsWithModels.toList.flatMap(_._2)
 
-        NonEmptyList(CaseClass(typeName, fields, ExtendsClauses.empty), models)
+        NonEmptyList(CaseClass(typeName, fields, ExtendsClause.empty), models)
 
       case NumberSchema(None) =>
         data.NonEmptyList.one(ValueClass(typeName, Primitive.Double))
