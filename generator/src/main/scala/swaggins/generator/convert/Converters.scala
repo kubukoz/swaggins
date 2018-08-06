@@ -1,6 +1,7 @@
 package swaggins.generator.convert
 
 import cats.data
+import cats.implicits._
 import cats.data.NonEmptyList
 import io.scalaland.chimney.dsl._
 import swaggins.openapi.model.components.SchemaName
@@ -22,6 +23,15 @@ object Converters {
     schemaOrRef match {
       case Right(schema) =>
         convertSchema(schemaName.transformInto[TypeName], schema)
+      case Left(ref) =>
+        val alias = CaseClass(schemaName.transformInto[TypeName],
+                              NonEmptyList.one(
+                                CaseClassField(required = true,
+                                               FieldName("value"),
+                                               refToTypeRef(ref.`$ref`))),
+                              None)
+
+        NonEmptyList.of(alias)
     }
 
   private def convertDiscriminator(
@@ -38,15 +48,19 @@ object Converters {
                             schema: Schema): NonEmptyList[ScalaModel] = {
     schema match {
       case ObjectSchema(required, properties) =>
-        val fields = properties.map { prop =>
+        val fieldsWithModels = properties.map { prop =>
           val isRequired = required.exists(_.apply(prop.name))
 
-          CaseClassField(isRequired,
-                         prop.name.transformInto[FieldName],
-                         refSchemaToType(prop.schema))
+          val (tpe, modelOpt) = refSchemaToType(prop.name, prop.schema)
+
+          (CaseClassField(isRequired, prop.name.transformInto[FieldName], tpe),
+           modelOpt)
         }
 
-        data.NonEmptyList.one(CaseClass(typeName, fields, None))
+        val fields = fieldsWithModels.map(_._1)
+        val models = fieldsWithModels.toList.flatMap(_._2)
+
+        NonEmptyList(CaseClass(typeName, fields, None), models)
 
       case NumberSchema(None) =>
         data.NonEmptyList.one(ValueClass(typeName, Primitive.Double))
@@ -72,11 +86,26 @@ object Converters {
       )
   }
 
-  private def refSchemaToType(schema: Reference.Able[Schema]): TypeReference =
+  /**
+    * Resolves a schema/reference to a type reference and (optionally) a synthetic type.
+    * */
+  private def refSchemaToType(
+    name: SchemaName,
+    schema: Reference.Able[Schema]): (TypeReference, Option[ScalaModel]) =
     schema match {
-      case Left(ref)                 => refToTypeRef(ref.`$ref`)
-      case Right(NumberSchema(None)) => Primitive.Double
-      case Right(StringSchema(None)) => Primitive.String
-      case Right(ArraySchema(items)) => ListType(refSchemaToType(items))
+      case Left(ref)                 => (refToTypeRef(ref.`$ref`), None)
+      case Right(NumberSchema(None)) => (Primitive.Double, None)
+      case Right(StringSchema(None)) => (Primitive.String, None)
+      case Right(StringSchema(Some(values))) =>
+        val enumModel = Some(
+          Enumerated(name.transformInto[TypeName],
+                     Primitive.String,
+                     values.map(ScalaLiteral.String(_))))
+
+        (name.transformInto[OrdinaryType], enumModel)
+
+      case Right(ArraySchema(items)) =>
+        val (childType, childModel) = refSchemaToType(name, items)
+        (ListType(childType), childModel)
     }
 }

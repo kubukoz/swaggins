@@ -3,7 +3,6 @@ package swaggins.openapi.model.shared
 import cats.data.NonEmptyList
 import io.circe.Decoder
 import io.circe.generic.JsonCodec
-import io.circe.generic.extras.semiauto._
 import swaggins.openapi.model.components.SchemaName
 import cats.implicits._
 

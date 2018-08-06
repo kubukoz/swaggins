@@ -12,6 +12,11 @@ class StringOps(private val s: String) extends AnyVal {
     * */
   def lowerHead: String = modHead(_.toLower)
 
+  def toCamelCase: String = {
+    val afterSplit = s.split("\\-").toList
+    afterSplit.foldMap(_.upperHead)
+  }
+
   /**
     * Uppercases the string's head, leaves everything else unchanged
     * */
@@ -29,11 +34,6 @@ class StringOps(private val s: String) extends AnyVal {
     }
   }
 
-  def toCamelCase: String = {
-    val afterSplit = s.split("\\-").toList
-    afterSplit.foldMap(_.upperHead)
-  }
-
   def toCamelCaseLower: String = {
     val afterSplit = s.split("\\-").toList
     afterSplit match {
@@ -42,6 +42,12 @@ class StringOps(private val s: String) extends AnyVal {
     }
   }
 
-  def indented(columns: Int): String =
-    s.replaceAll("""\n""", "\n" + " " * columns)
+  def indented(columns: Int): String = {
+    s.split("\n")
+      .map {
+        case line if line.trim.nonEmpty => " " * columns + line
+        case _                          => ""
+      }
+      .mkString("\n")
+  }
 }

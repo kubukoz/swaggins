@@ -1,8 +1,8 @@
 package swaggins.scala.ast.model
 
-import cats.Show
-import cats.data.{NonEmptyList, NonEmptyMap}
+import cats.data.{NonEmptyList, NonEmptyMap, NonEmptySet}
 import cats.implicits._
+import cats.{Order, Show}
 import swaggins.core.implicits._
 import swaggins.scala.ast.ref.{OrdinaryType, TypeName, TypeReference}
 
@@ -78,9 +78,48 @@ case class SealedTraitHierarchy(name: TypeName,
   override def show: String =
     show"""sealed trait $name${extendsClauses.foldMap(_.show)}
           |object $name {
-          |  ${inhabitantsShow.indented(2)}
+          |${inhabitantsShow.indented(2)}
           |}""".stripMargin
 }
 
 case class Discriminator(propertyName: Option[FieldName],
                          mapping: Option[NonEmptyMap[String, OrdinaryType]])
+
+sealed trait ScalaLiteral extends Product with Serializable {
+
+  def asTypeName: TypeName = this match {
+    case ScalaLiteral.String(value) => TypeName(value)
+    case ScalaLiteral.Double(value) => TypeName(show"`$value`")
+  }
+}
+
+object ScalaLiteral {
+  case class String(value: scala.Predef.String) extends ScalaLiteral
+
+  object String {
+    implicit val show: Show[String]   = _.value
+    implicit val order: Order[String] = Order.by(_.value)
+  }
+
+  case class Double(value: scala.Double) extends ScalaLiteral
+}
+
+case class Enumerated[Literal <: ScalaLiteral: Show](
+  name: TypeName,
+  underlyingType: TypeReference,
+  values: NonEmptySet[Literal])
+    extends ScalaModel {
+  private val extendsClauses: Option[ExtendsClauses] = Some(
+    ExtendsClauses.productWithSerializable)
+
+  private val inhabitantsShow: String = values.map { str =>
+    show"""case object ${str.asTypeName} extends $name("$str")"""
+  }.mkString_("", "\n", "")
+
+  override def show: String =
+    show"""sealed abstract class $name(value: $underlyingType)${extendsClauses
+            .foldMap(_.show)}
+          |object $name {
+          |${inhabitantsShow.indented(2)}
+          |}""".stripMargin
+}

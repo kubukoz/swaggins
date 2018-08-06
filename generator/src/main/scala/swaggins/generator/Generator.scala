@@ -27,7 +27,8 @@ class ScalaCaseClassGenerator[F[_]: Sync] extends Generator[F] {
 
     Stream.emit(componentStrings).evalMap { fileStream =>
       fileStream.compile.toList.map { lines =>
-        GeneratedFile("models.scala", lines.mkString_("", "\n", "\n"))
+        GeneratedFile("models.scala",
+                      lines.mkString_("package models\n\n", "\n", "\n"))
       }
     }
   }
