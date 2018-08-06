@@ -158,7 +158,7 @@ case class ArraySchema(
   items: Reference.Able[Schema]
 ) extends Schema
 
-trait PrimitiveSchema[Literal] extends Schema {
+sealed trait PrimitiveSchema[Literal] extends Schema {
   def enum: Option[NonEmptySet[Literal]]
 }
 

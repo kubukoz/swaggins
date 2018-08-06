@@ -33,7 +33,7 @@ components:
     cat:
       type: object
       properties:
-        huntingSkill:
+        hunting-skill:
           type: string
           enum:
           - clueless

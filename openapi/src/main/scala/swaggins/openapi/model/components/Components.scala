@@ -1,6 +1,5 @@
 package swaggins.openapi.model.components
 
-import cats.Show
 import cats.data.NonEmptyMap
 import cats.implicits._
 import cats.kernel.Order

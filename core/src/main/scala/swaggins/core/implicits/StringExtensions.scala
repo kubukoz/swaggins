@@ -40,6 +40,8 @@ class StringOps(private val s: String) extends AnyVal {
       case h :: t => h.toLowerCase + t.foldMap(_.upperHead)
       case _      => ""
     }
-
   }
+
+  def indented(columns: Int): String =
+    s.replaceAll("""\n""", "\n" + " " * columns)
 }

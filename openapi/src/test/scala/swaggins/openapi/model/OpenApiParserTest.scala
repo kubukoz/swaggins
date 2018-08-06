@@ -146,7 +146,7 @@ object OpenApiParserTest {
     val catSchema = ObjectSchema(
       None,
       NonEmptyList.of(
-        Property(SchemaName("huntingSkill"), Right(huntingSkillSchema))))
+        Property(SchemaName("hunting-skill"), Right(huntingSkillSchema))))
 
     val dogSchema =
       CompositeSchema(

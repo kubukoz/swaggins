@@ -1,27 +1,32 @@
 package swaggins.scala.ast.model
 
 import cats.Show
-import cats.data.NonEmptyList
+import cats.data.{NonEmptyList, NonEmptyMap}
 import cats.implicits._
 import swaggins.core.implicits._
-import swaggins.scala.ast.ref.{TypeName, TypeReference}
+import swaggins.scala.ast.ref.{OrdinaryType, TypeName, TypeReference}
 
 sealed trait ScalaModel extends Product with Serializable {
   def show: String
 }
 
-case class CaseClass(name: TypeName, fields: NonEmptyList[CaseClassField])
+case class CaseClass(name: TypeName,
+                     fields: NonEmptyList[CaseClassField],
+                     extendsClauses: Option[ExtendsClauses])
     extends ScalaModel {
+
   override def show: String =
-    show"""case class $name(${fields.mkString_("", ", ", "")})"""
+    show"""final case class $name(${fields.mkString_("", ", ", "")})${extendsClauses
+      .foldMap(_.show)}"""
 }
 
-case class ValueClass(name: TypeName, tpe: TypeReference) extends ScalaModel {
-  private val fieldName: FieldName = FieldName("value")
-  private val field: CaseClassField =
-    CaseClassField(required = true, fieldName, tpe)
+object ValueClass {
 
-  override def show: String = show"""case class $name($field) extends AnyVal"""
+  def apply(name: TypeName, tpe: TypeReference): CaseClass =
+    CaseClass(name,
+              NonEmptyList.one(
+                CaseClassField(required = true, FieldName("value"), tpe)),
+              Some(ExtendsClauses.anyVal))
 }
 
 case class CaseClassField(required: Boolean,
@@ -46,3 +51,36 @@ case class FieldName(value: String) extends AnyVal
 object FieldName {
   implicit val show: Show[FieldName] = Show.show(_.value.toCamelCaseLower)
 }
+
+case class ExtendsClauses(refs: NonEmptyList[TypeReference]) extends AnyVal
+
+object ExtendsClauses {
+  implicit val show: Show[ExtendsClauses] = Show.show { clauses =>
+    show""" extends ${clauses.refs.mkString_("", " with ", "")}"""
+  }
+
+  val productWithSerializable = ExtendsClauses(
+    NonEmptyList.of(OrdinaryType("Product"), OrdinaryType("Serializable")))
+
+  val anyVal = ExtendsClauses(NonEmptyList.one(OrdinaryType("AnyVal")))
+}
+case class SealedTraitHierarchy(name: TypeName,
+                                inhabitants: NonEmptyList[ScalaModel],
+                                discriminator: Option[Discriminator])
+    extends ScalaModel {
+
+  private val extendsClauses: Option[ExtendsClauses] = Some(
+    ExtendsClauses.productWithSerializable)
+
+  private val inhabitantsShow: String =
+    inhabitants.map(_.show).mkString_("", "\n", "")
+
+  override def show: String =
+    show"""sealed trait $name${extendsClauses.foldMap(_.show)}
+          |object $name {
+          |  ${inhabitantsShow.indented(2)}
+          |}""".stripMargin
+}
+
+case class Discriminator(propertyName: Option[FieldName],
+                         mapping: Option[NonEmptyMap[String, OrdinaryType]])

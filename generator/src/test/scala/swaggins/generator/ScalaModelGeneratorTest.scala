@@ -23,7 +23,27 @@ class ScalaModelGeneratorTest extends BaseTest {
                         fileContent("/expected-scala-models.scala"))
         )
 
-//        println(expected.head.content)
+        compare(actual, expected)
+      }
+    }
+
+    "the coproducts file is given" should {
+      "generate valid code" in {
+        val generator: Generator[Coeval] = new ScalaCaseClassGenerator[Coeval]
+
+        val actual =
+          generator
+            .generate(OpenApiParserTest.expected.coproducts)
+            .compile
+            .toList
+            .value
+
+        val expected = List(
+          GeneratedFile("models.scala",
+                        fileContent("/expected-coproducts-scala-models.scala"))
+        )
+
+        println(actual.head.content)
         compare(actual, expected)
       }
     }
