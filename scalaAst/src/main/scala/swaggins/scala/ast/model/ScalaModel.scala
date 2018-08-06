@@ -77,6 +77,7 @@ case class SealedTraitHierarchy(name: TypeName,
 
   override def show: String =
     show"""sealed trait $name${extendsClauses.foldMap(_.show)}
+          |
           |object $name {
           |${inhabitantsShow.indented(2)}
           |}""".stripMargin
@@ -88,8 +89,8 @@ case class Discriminator(propertyName: Option[FieldName],
 sealed trait ScalaLiteral extends Product with Serializable {
 
   def asTypeName: TypeName = this match {
-    case ScalaLiteral.String(value) => TypeName(value)
-    case ScalaLiteral.Double(value) => TypeName(show"`$value`")
+    case ScalaLiteral.String(value) => TypeName.parse(value)
+    case ScalaLiteral.Double(value) => TypeName.raw(show"`$value`")
   }
 }
 
@@ -119,6 +120,7 @@ case class Enumerated[Literal <: ScalaLiteral: Show](
   override def show: String =
     show"""sealed abstract class $name(value: $underlyingType)${extendsClauses
             .foldMap(_.show)}
+          |
           |object $name {
           |${inhabitantsShow.indented(2)}
           |}""".stripMargin

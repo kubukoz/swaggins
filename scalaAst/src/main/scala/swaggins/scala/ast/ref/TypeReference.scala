@@ -25,8 +25,11 @@ object Primitive {
   object String extends OrdinaryType("String")
 }
 
-case class TypeName(value: String) extends AnyVal
+case class TypeName private (value: String) extends AnyVal
 
 object TypeName {
-  implicit val show: Show[TypeName] = Show.show(_.value.toCamelCase)
+  def parse(value: String): TypeName = TypeName(value.toCamelCase)
+  def raw(value: String): TypeName = TypeName(value)
+
+  implicit val show: Show[TypeName] = Show.show(_.value)
 }

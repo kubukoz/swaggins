@@ -22,9 +22,9 @@ object Converters {
     schemaOrRef: Reference.Able[Schema]): NonEmptyList[ScalaModel] =
     schemaOrRef match {
       case Right(schema) =>
-        convertSchema(schemaName.transformInto[TypeName], schema)
+        convertSchema(TypeName.parse(schemaName.value), schema)
       case Left(ref) =>
-        val alias = CaseClass(schemaName.transformInto[TypeName],
+        val alias = CaseClass(TypeName.parse(schemaName.value),
                               NonEmptyList.one(
                                 CaseClassField(required = true,
                                                FieldName("value"),
@@ -98,7 +98,7 @@ object Converters {
       case Right(StringSchema(None)) => (Primitive.String, None)
       case Right(StringSchema(Some(values))) =>
         val enumModel = Some(
-          Enumerated(name.transformInto[TypeName],
+          Enumerated(TypeName.parse(name.value),
                      Primitive.String,
                      values.map(ScalaLiteral.String(_))))
 
