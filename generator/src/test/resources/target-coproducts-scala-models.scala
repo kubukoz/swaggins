@@ -36,4 +36,13 @@ sealed trait Dog extends Product with Serializable
 object Dog {
   case class Husky(husky: models.Husky) extends Dog
   case class York(york: models.York) extends Dog
+  final case class Anonymous1(name: String, age: Double, gender: Option[Anonymous1.Gender]) extends Dog
+
+  object Anonymous1 {
+    sealed abstract class Gender(value: String) extends Product with Serializable
+    object Gender {
+      case object Female extends Gender("female")
+      case object Male extends Gender("male")
+    }
+  }
 }

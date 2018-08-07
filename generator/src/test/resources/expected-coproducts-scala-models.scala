@@ -16,6 +16,13 @@ sealed trait Dog extends Product with Serializable
 object Dog {
   final case class SYNTHETIC_NAME(value: Husky)
   final case class SYNTHETIC_NAME(value: York)
+  final case class SYNTHETIC_NAME(name: String, age: Double, gender: Option[Gender])
+  sealed abstract class Gender(value: String) extends Product with Serializable
+
+  object Gender {
+    case object Female extends Gender("female")
+    case object Male extends Gender("male")
+  }
 }
 
 final case class Dog2(value: Dog)

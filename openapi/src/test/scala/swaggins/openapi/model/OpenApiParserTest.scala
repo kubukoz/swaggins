@@ -148,10 +148,23 @@ object OpenApiParserTest {
       NonEmptyList.of(
         Property(SchemaName("hunting-skill"), Right(huntingSkillSchema))))
 
+    val anonymousDogSchema = ObjectSchema(
+      Some(NonEmptySet.of(SchemaName("name"), SchemaName("age"))),
+      NonEmptyList.of(
+        Property(SchemaName("name"), Right(StringSchema(None))),
+        Property(SchemaName("age"), Right(NumberSchema(None))),
+        Property(SchemaName("gender"),
+                 Right(StringSchema(Some(NonEmptySet.of("male", "female")))))
+      )
+    )
+
     val dogSchema =
       CompositeSchema(
-        NonEmptyList.of(Left(componentRef("husky")),
-                        Left(componentRef("york"))),
+        NonEmptyList.of(
+          Left(componentRef("husky")),
+          Left(componentRef("york")),
+          Right(anonymousDogSchema)
+        ),
         CompositeSchemaKind.OneOf,
         Some(Discriminator(Some(SchemaName("dogType")), None))
       )

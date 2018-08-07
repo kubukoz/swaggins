@@ -46,6 +46,16 @@ components:
       oneOf:
       - $ref: '#/components/schemas/husky'
       - $ref: '#/components/schemas/york'
+      - type: object
+        required: [name, age]
+        properties:
+          name:
+            type: string
+          age:
+            type: number
+          gender:
+            type: string
+            enum: [male, female]
     dog2:
       $ref: '#/components/schemas/dog'
     husky:
