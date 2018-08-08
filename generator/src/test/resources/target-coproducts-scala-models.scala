@@ -18,8 +18,8 @@ final case class Husky(woof: Option[String])
 sealed trait Strnum extends Product with Serializable
 
 object Strnum {
-  final case class String(value: String) extends Strnum
-  final case class Double(value: Double) extends Strnum
+  final case class String(value: scala.Predef.String) extends Strnum
+  final case class Double(value: scala.Double) extends Strnum
 }
 
 final case class York(woof: Option[String])
