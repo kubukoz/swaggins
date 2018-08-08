@@ -60,7 +60,9 @@ object Converters {
         val fields = fieldsWithModels.map(_._1)
         val models = fieldsWithModels.toList.flatMap(_._2)
 
-        NonEmptyList(CaseClass(typeName, fields, ExtendsClause.empty), models)
+        val companion = if(models.isEmpty) None else Some(CompanionObject(models))
+
+        NonEmptyList.of(CaseClass(typeName, fields, ExtendsClause.empty, companion))
 
       case NumberSchema(None) =>
         data.NonEmptyList.one(ValueClass(typeName, Primitive.Double))
@@ -80,7 +82,7 @@ object Converters {
       SealedTraitHierarchy(
         name,
         compositeSchema.schemas.flatMap { schemaOrRef =>
-          convertSchemaOrRef(SchemaName("SYNTHETIC_NAME"), schemaOrRef)
+          convertSchemaOrRef(SchemaName("SYNTHETIC_NAME"), schemaOrRef).map(_.setExtendsClause(ExtendsClause(List(OrdinaryType(name.value)))))
         },
         compositeSchema.discriminator.map(convertDiscriminator)
       )
