@@ -2,7 +2,7 @@ package swaggins.generator.convert
 
 import cats.data
 import cats.implicits._
-import cats.data.NonEmptyList
+import cats.data.{NonEmptyList, State}
 import io.scalaland.chimney.dsl._
 import swaggins.openapi.model.components.SchemaName
 import swaggins.openapi.model.shared.ReferenceRef.ComponentRef
@@ -60,9 +60,11 @@ object Converters {
         val fields = fieldsWithModels.map(_._1)
         val models = fieldsWithModels.toList.flatMap(_._2)
 
-        val companion = if(models.isEmpty) None else Some(CompanionObject(models))
+        val companion =
+          if (models.isEmpty) None else Some(CompanionObject(models))
 
-        NonEmptyList.of(CaseClass(typeName, fields, ExtendsClause.empty, companion))
+        NonEmptyList.of(
+          CaseClass(typeName, fields, ExtendsClause.empty, companion))
 
       case NumberSchema(None) =>
         data.NonEmptyList.one(ValueClass(typeName, Primitive.Double))
@@ -79,11 +81,27 @@ object Converters {
     name: TypeName,
     compositeSchema: CompositeSchema): ScalaModel = compositeSchema.kind match {
     case CompositeSchemaKind.OneOf | CompositeSchemaKind.AnyOf =>
+      type S[A] = State[Int, A]
+
+      val schemaz = compositeSchema.schemas.flatTraverse[S, ScalaModel] {
+        schemaOrRef =>
+          //todo make this happen:
+          //if it's a reference, we wrap in something of the same name
+          //if it's a new type, we create it here directly and use a new name
+
+          val getAndIncSyntheticNumber: S[Int] = State.get[Int] <* State.modify(_ + 1)
+
+          getAndIncSyntheticNumber.map { num =>
+            convertSchemaOrRef(SchemaName(s"SYNTHETIC_NAME$$$num"), schemaOrRef)
+              .map(_.setExtendsClause(
+                ExtendsClause(List(OrdinaryType(name.value)))))
+          }
+      }
+      val schemas = schemaz.runA(1).value
+
       SealedTraitHierarchy(
         name,
-        compositeSchema.schemas.flatMap { schemaOrRef =>
-          convertSchemaOrRef(SchemaName("SYNTHETIC_NAME"), schemaOrRef).map(_.setExtendsClause(ExtendsClause(List(OrdinaryType(name.value)))))
-        },
+        schemas,
         compositeSchema.discriminator.map(convertDiscriminator)
       )
   }
