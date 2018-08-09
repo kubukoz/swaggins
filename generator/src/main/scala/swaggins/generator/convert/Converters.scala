@@ -91,6 +91,8 @@ object Converters {
 
           val derivedWrappedName: S[SchemaName] = schemaOrRef match {
             case Left(ref) => SchemaName(refToTypeRef(ref.`$ref`).show).pure[S]
+            case Right(StringSchema(None)) => SchemaName(Primitive.String.show).pure[S]
+            case Right(NumberSchema(None)) => SchemaName(Primitive.Double.show).pure[S]
             case Right(_) => getAndIncSyntheticNumber.map(num => SchemaName(s"Anonymous$$$num"))
           }
 

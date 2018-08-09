@@ -42,8 +42,8 @@ object Pet {
 sealed trait Strnum extends Product with Serializable
 
 object Strnum {
-  final case class Anonymous$1(value: String) extends Strnum
-  final case class Anonymous$2(value: Double) extends Strnum
+  final case class String(value: String) extends Strnum
+  final case class Double(value: Double) extends Strnum
 }
 
 final case class York(woof: Option[String])
