@@ -22,7 +22,6 @@ class ScalaCaseClassGenerator[F[_]: Sync] extends Generator[F] {
       Stream
         .emits(componentList)
         .map((Converters.convertSchemaOrRef _).tupled)
-        .flatMap(elems => Stream.emits(elems.toList))
         .map(_.show)
 
     Stream.emit(componentStrings).evalMap { fileStream =>

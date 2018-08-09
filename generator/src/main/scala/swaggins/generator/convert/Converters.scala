@@ -1,8 +1,7 @@
 package swaggins.generator.convert
 
-import cats.data
-import cats.implicits._
 import cats.data.{NonEmptyList, State}
+import cats.implicits._
 import io.scalaland.chimney.dsl._
 import swaggins.openapi.model.components.SchemaName
 import swaggins.openapi.model.shared.ReferenceRef.ComponentRef
@@ -19,7 +18,7 @@ object Converters {
 
   def convertSchemaOrRef(
     schemaName: SchemaName,
-    schemaOrRef: Reference.Able[Schema]): NonEmptyList[ScalaModel] =
+    schemaOrRef: Reference.Able[Schema]): ScalaModel =
     schemaOrRef match {
       case Right(schema) =>
         convertSchema(TypeName.parse(schemaName.value), schema)
@@ -31,7 +30,7 @@ object Converters {
                                                refToTypeRef(ref.`$ref`))),
                               ExtendsClause.empty)
 
-        NonEmptyList.of(alias)
+        alias
     }
 
   private def convertDiscriminator(
@@ -45,7 +44,7 @@ object Converters {
     * Converts an OpenAPI Schema to a Scala model (e.g. a case class or an ADT).
     * */
   private def convertSchema(typeName: TypeName,
-                            schema: Schema): NonEmptyList[ScalaModel] = {
+                            schema: Schema): ScalaModel = {
     schema match {
       case ObjectSchema(required, properties) =>
         val fieldsWithModels = properties.map { prop =>
@@ -63,27 +62,26 @@ object Converters {
         val companion =
           if (models.isEmpty) None else Some(CompanionObject(models))
 
-        NonEmptyList.of(
-          CaseClass(typeName, fields, ExtendsClause.empty, companion))
+        CaseClass(typeName, fields, ExtendsClause.empty, companion)
 
       case NumberSchema(None) =>
-        data.NonEmptyList.one(ValueClass(typeName, Primitive.Double))
+        ValueClass(typeName, Primitive.Double)
 
       case StringSchema(None) =>
-        data.NonEmptyList.one(ValueClass(typeName, Primitive.String))
+        ValueClass(typeName, Primitive.String)
 
       case comp: CompositeSchema =>
-        data.NonEmptyList.one(convertCompositeSchema(typeName, comp))
+        convertCompositeSchema(typeName, comp)
     }
   }
 
   private def convertCompositeSchema(
-    name: TypeName,
+    compositeName: TypeName,
     compositeSchema: CompositeSchema): ScalaModel = compositeSchema.kind match {
     case CompositeSchemaKind.OneOf | CompositeSchemaKind.AnyOf =>
       type S[A] = State[Int, A]
 
-      val schemaz = compositeSchema.schemas.flatTraverse[S, ScalaModel] {
+      val schemaz = compositeSchema.schemas.traverse[S, ScalaModel] {
         schemaOrRef =>
           //todo make this happen:
           //if it's a reference, we wrap in something of the same name
@@ -91,17 +89,19 @@ object Converters {
 
           val getAndIncSyntheticNumber: S[Int] = State.get[Int] <* State.modify(_ + 1)
 
-          getAndIncSyntheticNumber.map { num =>
-            convertSchemaOrRef(SchemaName(s"SYNTHETIC_NAME$$$num"), schemaOrRef)
-              .map(_.setExtendsClause(
-                ExtendsClause(List(OrdinaryType(name.value)))))
+          val derivedWrappedName: S[SchemaName] = schemaOrRef match {
+            case Left(ref) => SchemaName(refToTypeRef(ref.`$ref`).show).pure[S]
+            case Right(_) => getAndIncSyntheticNumber.map(num => SchemaName(s"Anonymous$$$num"))
+          }
+
+          derivedWrappedName.map { derivedName =>
+            convertSchemaOrRef(derivedName, schemaOrRef)
+              .setExtendsClause(ExtendsClause(List(OrdinaryType(compositeName.value))))
           }
       }
-      val schemas = schemaz.runA(1).value
-
       SealedTraitHierarchy(
-        name,
-        schemas,
+        compositeName,
+        schemaz.runA(1).value,
         compositeSchema.discriminator.map(convertDiscriminator)
       )
   }
