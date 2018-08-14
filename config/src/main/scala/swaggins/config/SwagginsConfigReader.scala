@@ -23,7 +23,7 @@ class SwagginsConfigReader[F[_]: Sync] {
   private def validate(
     config: SwagginsConfig): ValidatedNes[SourceIdentifier, Unit] = {
 
-    SwagginsConfigValidator.validateSources(config)
+    SwagginsConfigValidator.validateConfig(config)
   }
 
   def read(path: Path): F[SwagginsConfig] =
@@ -33,7 +33,7 @@ class SwagginsConfigReader[F[_]: Sync] {
 object SwagginsConfigValidator {
   type ValidatedNes[E, +R] = Validated[NonEmptySet[E], R]
 
-  def validateSources(
+  def validateConfig(
     config: SwagginsConfig): ValidatedNes[SourceIdentifier, Unit] = {
     val validateSources: ValidatedNes[SourceIdentifier, Unit] = {
       val usedSources = config.code.value.keys
@@ -48,6 +48,8 @@ object SwagginsConfigValidator {
             .leftMap[NonEmptySet[SourceIdentifier]](_.toNes)
         }
     }
+
+    //not inlined on purpose
     validateSources
   }
 }
