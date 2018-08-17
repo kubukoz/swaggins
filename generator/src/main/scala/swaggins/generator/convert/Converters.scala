@@ -83,10 +83,6 @@ object Converters {
 
       val schemaz = compositeSchema.schemas.traverse[S, ScalaModel] {
         schemaOrRef =>
-          //todo make this happen:
-          //if it's a reference, we wrap in something of the same name
-          //if it's a new type, we create it here directly and use a new name
-
           val getAndIncSyntheticNumber: S[Int] = State.get[Int] <* State.modify(_ + 1)
 
           val derivedWrappedName: S[SchemaName] = schemaOrRef match {
