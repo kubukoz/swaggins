@@ -64,11 +64,11 @@ class SwagginsConfigReaderTest extends BaseTest {
       }
     }
 
-    "get the first example" in {
+    "validate the first example" in {
       val validator: SwagginsConfigValidator[ConfigValidationError.EitherNel] =
         SwagginsConfigValidator.make[ConfigValidationError.EitherNel]
 
-      validator.validateConfig(parsed) shouldBe Right(parsed)
+      validator.validateConfig(parsed) shouldBe Right(())
     }
 
     "not validate if a source isn't defined" in {

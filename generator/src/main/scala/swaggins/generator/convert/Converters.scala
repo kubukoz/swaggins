@@ -1,7 +1,8 @@
 package swaggins.generator.convert
 
-import cats.data.{NonEmptyList, State}
+import cats.data.{NonEmptyList, NonEmptyMap, State}
 import cats.implicits._
+import io.scalaland.chimney.Transformer
 import io.scalaland.chimney.dsl._
 import swaggins.openapi.model.components.SchemaName
 import swaggins.openapi.model.shared.ReferenceRef.ComponentRef
@@ -22,14 +23,12 @@ object Converters {
       case Right(schema) =>
         convertSchema(TypeName.parse(schemaName.value), schema)
       case Left(ref) =>
-        val alias = CaseClass(TypeName.parse(schemaName.value),
-                              NonEmptyList.one(
-                                CaseClassField(required = true,
-                                               FieldName("value"),
-                                               refToTypeRef(ref.`$ref`))),
-                              ExtendsClause.empty)
-
-        alias
+        CaseClass(TypeName.parse(schemaName.value),
+                  NonEmptyList.one(
+                    CaseClassField(required = true,
+                                   FieldName("value"),
+                                   refToTypeRef(ref.`$ref`))),
+                  ExtendsClause.empty)
     }
 
   private def convertDiscriminator(

@@ -1,4 +1,5 @@
 package swaggins.generator
+
 import cats.effect.IO
 import cats.implicits._
 import org.scalatest.Assertion
@@ -15,9 +16,7 @@ class ScalaModelGeneratorTest extends BaseTest {
           generator.generate(OpenApiParserTest.expected.full).compile.toList
 
         val expected = fileContent("/expected-scala-models.scala")
-          .map(
-            GeneratedFile("models.scala", _)
-          )
+          .map(GeneratedFile("models.scala", _))
           .map(List(_))
 
         (actual, expected).mapN(compare).flatten
@@ -51,11 +50,11 @@ class ScalaModelGeneratorTest extends BaseTest {
     IO(actual should have size expected.size.toLong) *>
       expected.traverse { expectedFile =>
         actualByName.get(expectedFile.name) match {
-          case Some(actualFile) if actualFile == expectedFile =>
+          case Some(actualFile) if actualFile eqv expectedFile =>
             succeed.pure[IO]
           case Some(actualFile) =>
-            IO(fail(show"""${expectedFile.name}'s content wasn't equal to expected. Got:
-          |${actualFile.content}""".stripMargin))
+            IO(fail(
+              show"${expectedFile.name}'s content wasn't equal to expected. Got:\n" + actualFile.content + "\n"))
 
           case None => IO(fail(s"${expectedFile.name}: file not found"))
         }

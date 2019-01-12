@@ -40,8 +40,9 @@ object FileReader {
     blockingEc: ExecutionContext): FileReader[F] = new FileReader[F] {
     override def readFile(path: Path): F[String] = {
       fs2.io.file
-        .readAll[F](path, blockingEc, 8192)
+        .readAll[F](path, blockingEc, 4096)
         .through(text.utf8Decode)
+        .through(text.lines)
         .intersperse("\n")
         .compile
         .foldMonoid
