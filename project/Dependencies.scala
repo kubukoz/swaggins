@@ -45,7 +45,8 @@ object Dependencies {
       "org.typelevel"     %% "cats-core"    % Versions.cats,
       "io.chrisdavenport" %% "cats-par"     % Versions.catsParTemp,
       "org.typelevel"     %% "cats-laws"    % Versions.cats % Test,
-      "org.typelevel"     %% "cats-testkit" % Versions.cats % Test
+      "org.typelevel"     %% "cats-testkit" % Versions.cats % Test,
+      "com.olegpy"        %% "meow-mtl"     % Versions.meowMtl
     )
 
   val fs2 =
@@ -59,6 +60,7 @@ object Versions {
   val log4Cats            = "0.2.0"
   val bm4                 = "0.3.0-M4"
   val cats                = "1.5.0"
+  val meowMtl             = "0.2.0"
   val catsParTemp         = "0.2.0"
   val circe               = "0.11.0"
   val circeYaml           = "0.9.0"

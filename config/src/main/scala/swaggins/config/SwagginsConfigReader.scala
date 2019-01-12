@@ -1,66 +1,48 @@
 package swaggins.config
 import java.nio.file.Path
 
-import cats.data.{NonEmptySet, Validated}
-import cats.effect.{ContextShift, Sync}
+import cats.{Applicative, Parallel}
 import cats.implicits._
-import swaggins.config.SwagginsConfigValidator.ValidatedNes
-import swaggins.config.error.UnknownSourcesException
+import cats.temp.par._
+import swaggins.config.error.ConfigValidationError
+import swaggins.config.error.ConfigValidationError.UnknownSources
 import swaggins.config.model.SwagginsConfig
 import swaggins.config.model.shared.SourceIdentifier
-import swaggins.core.Parsers
+import swaggins.core.Throwables.MonadThrow
+import swaggins.core.{FileReader, Parsers}
 
-import scala.concurrent.ExecutionContext
-
-//todo rethink interface
 trait SwagginsConfigReader[F[_]] {
-  def get(parsed: SwagginsConfig): F[SwagginsConfig]
   def read(path: Path): F[SwagginsConfig]
 }
 
 object SwagginsConfigReader {
 
-  def make[F[_]: Sync: ContextShift](
-    blockingEc: ExecutionContext): SwagginsConfigReader[F] =
-    new SwagginsConfigReader[F] {
+  def make[F[_]: MonadThrow: FileReader: SwagginsConfigValidator]
+    : SwagginsConfigReader[F] =
+    Parsers.json
+      .parseFile[F, SwagginsConfig](_)
+      .flatTap(SwagginsConfigValidator[F].validateConfig)
+}
 
-      def get(parsed: SwagginsConfig): F[SwagginsConfig] = {
-        validate(parsed).toEither
-          .leftMap[Throwable](UnknownSourcesException)
-          .liftTo[F]
-          .as(parsed)
-      }
-
-      private def validate(
-        config: SwagginsConfig): ValidatedNes[SourceIdentifier, Unit] = {
-
-        SwagginsConfigValidator.validateConfig(config)
-      }
-
-      def read(path: Path): F[SwagginsConfig] =
-        Parsers.json.parseFile[F, SwagginsConfig](blockingEc, path)
-    }
+trait SwagginsConfigValidator[F[_]] {
+  def validateConfig(config: SwagginsConfig): F[Unit]
 }
 
 object SwagginsConfigValidator {
-  type ValidatedNes[E, +R] = Validated[NonEmptySet[E], R]
 
-  def validateConfig(
-    config: SwagginsConfig): ValidatedNes[SourceIdentifier, Unit] = {
-    val validateSources: ValidatedNes[SourceIdentifier, Unit] = {
-      val usedSources = config.code.value.keys
-      val isDeclared: SourceIdentifier => Boolean =
-        config.sources.value.keys.contains
+  def apply[F[_]](
+    implicit F: SwagginsConfigValidator[F]): SwagginsConfigValidator[F] = F
 
-      usedSources.toList.traverse_ {
-        _.valid
-          .ensureOr(identity)(isDeclared)
-          .toValidatedNel
-          .leftMap[NonEmptySet[SourceIdentifier]](_.toNes)
-      }
+  def make[F[_]: NonEmptyPar: Applicative: ConfigValidationError.ErrorsNel]
+    : SwagginsConfigValidator[F] = config => {
+    val usedSources = config.code.value.keys
+    val isDeclared: SourceIdentifier => Boolean =
+      config.sources.value.keys(_)
+
+    Parallel.parNonEmptyTraverse_(usedSources.toNonEmptyList) {
+      case src if isDeclared(src) => Applicative[F].unit
+      case src =>
+        ConfigValidationError.RaiseNel.raiseOne[F, Unit](UnknownSources(src))
     }
-
-    //not inlined on purpose
-    validateSources
   }
 }

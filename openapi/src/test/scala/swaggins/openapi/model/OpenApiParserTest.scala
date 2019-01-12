@@ -3,34 +3,37 @@ package swaggins.openapi.model
 import cats.data
 import cats.data.{NonEmptyList, NonEmptyMap, NonEmptySet}
 import cats.effect.IO
+import cats.implicits._
 import swaggins.BaseTest
+import swaggins.core.{ExecutionContexts, FileReader}
 import swaggins.openapi.OpenApiParser
+import swaggins.openapi.model.OpenApiParserTest.expected
 import swaggins.openapi.model.components._
 import swaggins.openapi.model.paths.HttpMethod._
 import swaggins.openapi.model.paths._
 import swaggins.openapi.model.shared._
-import cats.implicits._
-import org.scalatest.Assertion
-import swaggins.core.ExecutionContexts
-import swaggins.openapi.model.OpenApiParserTest.expected
 
-import scala.concurrent.{ExecutionContextExecutorService, Future}
+object TestImplicits
 
 class OpenApiParserTest extends BaseTest {
-  "the parser" should {
 
-    "parse the sample spec" in runIOWithEc { ec =>
-      OpenApiParser
-        .make[IO](ec)
-        .parse(filePath("/parsing-works.yml"))
-        .map(_ shouldBe expected.full)
+  val parserResource =
+    ExecutionContexts.unboundedCached[IO].map { ec =>
+      implicit val fr = FileReader.make[IO](ec)
+      OpenApiParser.make
     }
 
-    "parse the coproducts spec" in runIOWithEc { ec =>
-      OpenApiParser
-        .make[IO](ec)
-        .parse(filePath("/coproducts.yml"))
-        .map(_ shouldBe expected.coproducts)
+  "the parser" should {
+    "parse the sample spec" in runIO {
+      parserResource.use {
+        _.parse(filePath("/parsing-works.yml")).map(_ shouldBe expected.full)
+      }
+    }
+
+    "parse the coproducts spec" in runIO {
+      parserResource.use {
+        _.parse(filePath("/coproducts.yml")).map(_ shouldBe expected.coproducts)
+      }
     }
   }
 }
