@@ -16,9 +16,8 @@ object Converters {
     case ComponentRef(name) => name.transformInto[OrdinaryType]
   }
 
-  def convertSchemaOrRef(
-    schemaName: SchemaName,
-    schemaOrRef: Reference.Able[Schema]): ScalaModel =
+  def convertSchemaOrRef(schemaName: SchemaName,
+                         schemaOrRef: Reference.Able[Schema]): ScalaModel =
     schemaOrRef match {
       case Right(schema) =>
         convertSchema(TypeName.parse(schemaName.value), schema)
@@ -43,8 +42,7 @@ object Converters {
   /**
     * Converts an OpenAPI Schema to a Scala model (e.g. a case class or an ADT).
     * */
-  private def convertSchema(typeName: TypeName,
-                            schema: Schema): ScalaModel = {
+  private def convertSchema(typeName: TypeName, schema: Schema): ScalaModel = {
     schema match {
       case ObjectSchema(required, properties) =>
         val fieldsWithModels = properties.map { prop =>
@@ -83,18 +81,23 @@ object Converters {
 
       val schemaz = compositeSchema.schemas.traverse[S, ScalaModel] {
         schemaOrRef =>
-          val getAndIncSyntheticNumber: S[Int] = State.get[Int] <* State.modify(_ + 1)
+          val getAndIncSyntheticNumber: S[Int] = State.get[Int] <* State.modify(
+            _ + 1)
 
           val derivedWrappedName: S[SchemaName] = schemaOrRef match {
             case Left(ref) => SchemaName(refToTypeRef(ref.`$ref`).show).pure[S]
-            case Right(StringSchema(None)) => SchemaName(Primitive.String.show).pure[S]
-            case Right(NumberSchema(None)) => SchemaName(Primitive.Double.show).pure[S]
-            case Right(_) => getAndIncSyntheticNumber.map(num => SchemaName(s"Anonymous$$$num"))
+            case Right(StringSchema(None)) =>
+              SchemaName(Primitive.String.show).pure[S]
+            case Right(NumberSchema(None)) =>
+              SchemaName(Primitive.Double.show).pure[S]
+            case Right(_) =>
+              getAndIncSyntheticNumber.map(num =>
+                SchemaName(s"Anonymous$$$num"))
           }
 
           derivedWrappedName.map { derivedName =>
-            convertSchemaOrRef(derivedName, schemaOrRef)
-              .setExtendsClause(ExtendsClause(List(OrdinaryType(compositeName.value))))
+            convertSchemaOrRef(derivedName, schemaOrRef).setExtendsClause(
+              ExtendsClause(List(OrdinaryType(compositeName.value))))
           }
       }
       SealedTraitHierarchy(

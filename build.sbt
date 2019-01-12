@@ -12,7 +12,6 @@ val commonDeps = Seq(
   simulacrum,
   scalatest,
   decline,
-  monix,
   chimney
 ) ++ circe ++ monocle ++ scalacheck ++ pureconfig ++ fs2 ++ cats
 
@@ -24,7 +23,7 @@ val plugins = List(
 
 val commonSettings = Seq(
   organization := "com.kubukoz",
-  scalaVersion := "2.12.6",
+  scalaVersion := "2.12.8",
   version := "0.0.1",
   libraryDependencies ++= commonDeps,
   (Test / fork) := true

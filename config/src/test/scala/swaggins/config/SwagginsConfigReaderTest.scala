@@ -1,8 +1,8 @@
 package swaggins.config
 
 import cats.data.{NonEmptyList, _}
+import cats.effect.IO
 import io.circe.DecodingFailure
-import monix.eval.Coeval
 import swaggins.BaseTest
 import swaggins.config.error.UnknownSourcesException
 import swaggins.config.model.SwagginsConfig
@@ -12,9 +12,6 @@ import swaggins.config.model.sources._
 
 class SwagginsConfigReaderTest extends BaseTest {
   "reader" should {
-    val reader: SwagginsConfigReader[Coeval] =
-      new SwagginsConfigReader[Coeval]
-
     val parsed = SwagginsConfig(
       Code(
         NonEmptyMap.of(
@@ -37,48 +34,52 @@ class SwagginsConfigReaderTest extends BaseTest {
 
     val path = filePath("/swaggins.json")
 
-    "parse the first example" in {
-      reader.read(path).value shouldBe parsed
+    "parse the first example" in runIOWithEc { ec =>
+      SwagginsConfigReader.make[IO](ec).read(path).map(_ shouldBe parsed)
     }
 
-    "fail if a source's URIs are empty" in {
-      reader
+    "fail if a source's URIs are empty" in runIOWithEc { ec =>
+      SwagginsConfigReader
+        .make[IO](ec)
         .read(filePath("/empty-source-uris.json"))
-        .failed
-        .value shouldBe a[DecodingFailure]
+        .attempt
+        .map {
+          case Left(e)  => e shouldBe a[DecodingFailure]
+          case Right(_) => fail()
+        }
     }
 
-    "get the first example" in {
-      reader.get(parsed).value shouldBe parsed
+    "get the first example" in runIOWithEc { ec =>
+      SwagginsConfigReader.make[IO](ec).get(parsed).map(_ shouldBe parsed)
     }
 
-    "read+get the first example" in {
-      reader.read(path).flatMap(reader.get).value shouldBe parsed
+    "read+get the first example" in runIOWithEc { ec =>
+      val reader: SwagginsConfigReader[IO] =
+        SwagginsConfigReader.make[IO](ec)
+
+      reader.read(path).flatMap(reader.get).map(_ shouldBe parsed)
     }
 
-    "not get if a source isn't defined" in {
+    "not get if a source isn't defined" in runIOWithEc { ec =>
       val invalid = SwagginsConfig(
         Code(
-          NonEmptyMap.of(
-            SourceIdentifier("kubukoz/hyze-spec2") -> SourceSpecs(
-              NonEmptyMap.one(
-                SpecIdentifier("transaction", "0.0.1"),
-                SpecGenerators(
-                  NonEmptyMap.one(GeneratorKey("http4s-server"),
-                                  GeneratorConfig("src/main/scala"))
-                ))))),
+          NonEmptyMap.of(SourceIdentifier("kubukoz/hyze-spec2") -> SourceSpecs(
+            NonEmptyMap.one(SpecIdentifier("transaction", "0.0.1"),
+                            SpecGenerators(
+                              NonEmptyMap.one(GeneratorKey("http4s-server"),
+                                              GeneratorConfig("src/main/scala"))
+                            ))))),
         Sources(
           NonEmptyMap.of(SourceIdentifier("kubukoz/hyze-spec") -> NonEmptyList
             .one(SourceUri(SourceScheme.Filesystem, "../hyze-spec"))))
       )
 
-      reader
-        .get(invalid)
-        .failed
-        .value
-        .asInstanceOf[UnknownSourcesException]
-        .sources shouldBe NonEmptySet.of(SourceIdentifier("kubukoz/hyze-spec2"))
-
+      SwagginsConfigReader.make[IO](ec).get(invalid).attempt.map {
+        case Left(e) =>
+          e.asInstanceOf[UnknownSourcesException].sources shouldBe NonEmptySet
+            .of(SourceIdentifier("kubukoz/hyze-spec2"))
+        case Right(_) => fail()
+      }
     }
   }
 }

@@ -33,7 +33,8 @@ case class CaseClass(name: TypeName,
   override def setExtendsClause(extendsClause: ExtendsClause): CaseClass =
     copy(extendsClause = extendsClause)
 
-  private val newlineAndCompanion = companionObject.foldMap(comp => "\n" + comp.show(name))
+  private val newlineAndCompanion =
+    companionObject.foldMap(comp => "\n" + comp.show(name))
   override def show: String =
     show"""final case class $name(${fields.mkString_("", ", ", "")})$extendsClause$newlineAndCompanion"""
 }

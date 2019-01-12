@@ -2,7 +2,7 @@ package swaggins.openapi.model
 
 import cats.data
 import cats.data.{NonEmptyList, NonEmptyMap, NonEmptySet}
-import monix.eval.Coeval
+import cats.effect.IO
 import swaggins.BaseTest
 import swaggins.openapi.OpenApiParser
 import swaggins.openapi.model.components._
@@ -10,20 +10,27 @@ import swaggins.openapi.model.paths.HttpMethod._
 import swaggins.openapi.model.paths._
 import swaggins.openapi.model.shared._
 import cats.implicits._
+import org.scalatest.Assertion
+import swaggins.core.ExecutionContexts
 import swaggins.openapi.model.OpenApiParserTest.expected
+
+import scala.concurrent.{ExecutionContextExecutorService, Future}
 
 class OpenApiParserTest extends BaseTest {
   "the parser" should {
-    val parser: OpenApiParser[Coeval] = new OpenApiParser[Coeval]
 
-    "parse the sample spec" in {
-      parser.parse(filePath("/parsing-works.yml")).value shouldBe expected.full
+    "parse the sample spec" in runIOWithEc { ec =>
+      OpenApiParser
+        .make[IO](ec)
+        .parse(filePath("/parsing-works.yml"))
+        .map(_ shouldBe expected.full)
     }
 
-    "parse the coproducts spec" in {
-      parser
+    "parse the coproducts spec" in runIOWithEc { ec =>
+      OpenApiParser
+        .make[IO](ec)
         .parse(filePath("/coproducts.yml"))
-        .value shouldBe expected.coproducts
+        .map(_ shouldBe expected.coproducts)
     }
   }
 }

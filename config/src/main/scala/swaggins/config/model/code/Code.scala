@@ -6,7 +6,6 @@ import io.circe.generic.extras.semiauto._
 import cats.implicits._
 import io.circe.generic.JsonCodec
 import swaggins.config.model.shared.SourceIdentifier
-import swaggins.core.implicits._
 
 case class Code(value: NonEmptyMap[SourceIdentifier, SourceSpecs])
     extends AnyVal
