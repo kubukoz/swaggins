@@ -5,7 +5,6 @@ import enumeratum._
 import io.circe.Decoder
 import io.circe.generic.extras.semiauto._
 import swaggins.config.model.shared.SourceIdentifier
-import swaggins.core.implicits._
 
 import scala.collection.immutable
 

@@ -6,7 +6,6 @@ import cats.kernel.Order
 import io.circe.generic.JsonCodec
 import io.circe.generic.extras.semiauto._
 import io.circe.{Decoder, KeyDecoder}
-import swaggins.core.implicits._
 import swaggins.openapi.model.shared.{Reference, Schema}
 
 @JsonCodec(decodeOnly = true)

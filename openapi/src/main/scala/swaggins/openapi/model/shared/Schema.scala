@@ -3,7 +3,6 @@ package swaggins.openapi.model.shared
 import cats.Show
 import cats.data.{NonEmptyList, NonEmptyMap, NonEmptySet}
 import cats.implicits._
-import cats.kernel.Order
 import enumeratum._
 import io.circe._
 import io.circe.generic.JsonCodec
@@ -159,7 +158,7 @@ case class ArraySchema(
   items: Reference.Able[Schema]
 ) extends Schema
 
-trait PrimitiveSchema[Literal] extends Schema {
+sealed trait PrimitiveSchema[Literal] extends Schema {
   def enum: Option[NonEmptySet[Literal]]
 }
 

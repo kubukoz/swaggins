@@ -1,11 +1,15 @@
 package swaggins.openapi
 
-import cats.effect.Sync
-import swaggins.core.Parsers
+import swaggins.core.Throwables.MonadThrow
+import swaggins.core.{FileReader, Parsers}
 import swaggins.openapi.model.OpenAPI
 
-class OpenApiParser[F[_]: Sync] {
+trait OpenApiParser[F[_]] {
+  def parse(path: java.nio.file.Path): F[OpenAPI]
+}
 
-  def parse(path: java.nio.file.Path): F[OpenAPI] =
-    Parsers.yaml.parseFile[F, OpenAPI](path)
+object OpenApiParser {
+
+  def make[F[_]: FileReader: MonadThrow]: OpenApiParser[F] =
+    path => Parsers.yaml.parseFile[F, OpenAPI](path)
 }

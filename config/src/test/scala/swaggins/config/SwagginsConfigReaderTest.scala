@@ -1,20 +1,25 @@
 package swaggins.config
 
-import cats.data.{NonEmptyList, _}
+import cats.data._
+import cats.effect.{ContextShift, IO, Resource, Sync}
+import cats.implicits._
+import cats.temp.par.{parToParallel => _}
 import io.circe.DecodingFailure
-import monix.eval.Coeval
 import swaggins.BaseTest
-import swaggins.config.error.UnknownSourcesException
+import swaggins.config.error.ConfigValidationError
+import swaggins.config.error.ConfigValidationError.UnknownSources
 import swaggins.config.model.SwagginsConfig
 import swaggins.config.model.code._
 import swaggins.config.model.shared.SourceIdentifier
 import swaggins.config.model.sources._
+import swaggins.core.FileReader
 
 class SwagginsConfigReaderTest extends BaseTest {
-  "reader" should {
-    val reader: SwagginsConfigReader[Coeval] =
-      new SwagginsConfigReader[Coeval]
 
+  def fileReader[F[_]: Sync: ContextShift]: Resource[IO, FileReader[F]] =
+    executionContextResource.map(ec => FileReader.make[F](ec))
+
+  "reader/validator" should {
     val parsed = SwagginsConfig(
       Code(
         NonEmptyMap.of(
@@ -37,26 +42,36 @@ class SwagginsConfigReaderTest extends BaseTest {
 
     val path = filePath("/swaggins.json")
 
-    "parse the first example" in {
-      reader.read(path).value shouldBe parsed
+    "parse the first example" in runIO {
+      fileReader[IO].use { implicit fr =>
+        implicit val validator: SwagginsConfigValidator[IO] = _.pure[IO].void
+
+        val reader: SwagginsConfigReader[IO] = SwagginsConfigReader.make
+        reader.read(path).map(_ shouldBe parsed)
+      }
     }
 
-    "fail if a source's URIs are empty" in {
-      reader
-        .read(filePath("/empty-source-uris.json"))
-        .failed
-        .value shouldBe a[DecodingFailure]
+    "fail if a source's URIs are empty" in runIO {
+      fileReader[IO].use { implicit fr =>
+        implicit val validator: SwagginsConfigValidator[IO] = _.pure[IO].void
+
+        val reader: SwagginsConfigReader[IO] = SwagginsConfigReader.make
+
+        reader.read(filePath("/empty-source-uris.json")).attempt.map {
+          case Left(e)  => e shouldBe a[DecodingFailure]
+          case Right(_) => fail()
+        }
+      }
     }
 
-    "get the first example" in {
-      reader.get(parsed).value shouldBe parsed
+    "validate the first example" in {
+      val validator: SwagginsConfigValidator[ConfigValidationError.EitherNel] =
+        SwagginsConfigValidator.make[ConfigValidationError.EitherNel]
+
+      validator.validateConfig(parsed) shouldBe Right(())
     }
 
-    "read+get the first example" in {
-      reader.read(path).flatMap(reader.get).value shouldBe parsed
-    }
-
-    "not get if a source isn't defined" in {
+    "not validate if a source isn't defined" in {
       val invalid = SwagginsConfig(
         Code(
           NonEmptyMap.of(
@@ -72,13 +87,16 @@ class SwagginsConfigReaderTest extends BaseTest {
             .one(SourceUri(SourceScheme.Filesystem, "../hyze-spec"))))
       )
 
-      reader
-        .get(invalid)
-        .failed
-        .value
-        .asInstanceOf[UnknownSourcesException]
-        .sources shouldBe NonEmptySet.of(SourceIdentifier("kubukoz/hyze-spec2"))
+      val validator: SwagginsConfigValidator[ConfigValidationError.EitherNel] =
+        SwagginsConfigValidator.make[ConfigValidationError.EitherNel]
 
+      validator.validateConfig(invalid) match {
+        case Left(e) =>
+          e should have size 1
+          e.head.asInstanceOf[UnknownSources].source shouldBe SourceIdentifier(
+            "kubukoz/hyze-spec2")
+        case Right(_) => fail()
+      }
     }
   }
 }

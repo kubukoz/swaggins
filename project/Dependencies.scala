@@ -13,8 +13,8 @@ object Dependencies {
   val log4Cats   = "io.chrisdavenport"    %% "log4cats-slf4j" % Versions.log4Cats
   val scalatest  = "org.scalatest"        %% "scalatest"      % Versions.scalatest % Test
   val simulacrum = "com.github.mpilquist" %% "simulacrum"     % Versions.simulacrum
-  val monix      = "io.monix"             %% "monix"          % Versions.monix
   val decline    = "com.monovore"         %% "decline"        % Versions.decline
+  val chimney    = "io.scalaland"         %% "chimney"        % Versions.chimney
 
   val scalacheck = Seq(
     "com.fortysevendeg"          %% "scalacheck-datetime"       % Versions.scalacheckJava8 % Test,
@@ -24,12 +24,6 @@ object Dependencies {
   val pureconfig = Seq(
     "com.github.pureconfig" %% "pureconfig-cats-effect" % Versions.pureconfig,
     "com.github.pureconfig" %% "pureconfig-enumeratum"  % Versions.pureconfig
-  )
-
-  val macwire = Seq(
-    "com.softwaremill.macwire" %% "macros" % Versions.macwire % Provided,
-    "com.softwaremill.macwire" %% "util"   % Versions.macwire,
-    "com.softwaremill.macwire" %% "proxy"  % Versions.macwire
   )
 
   val circe = Seq(
@@ -51,7 +45,8 @@ object Dependencies {
       "org.typelevel"     %% "cats-core"    % Versions.cats,
       "io.chrisdavenport" %% "cats-par"     % Versions.catsParTemp,
       "org.typelevel"     %% "cats-laws"    % Versions.cats % Test,
-      "org.typelevel"     %% "cats-testkit" % Versions.cats % Test
+      "org.typelevel"     %% "cats-testkit" % Versions.cats % Test,
+      "com.olegpy"        %% "meow-mtl"     % Versions.meowMtl
     )
 
   val fs2 =
@@ -62,23 +57,23 @@ object Dependencies {
 }
 
 object Versions {
-  val log4Cats            = "0.0.7"
-  val bm4                 = "0.2.4"
-  val cats                = "1.2.0"
-  val catsParTemp         = "0.1.0"
-  val circe               = "0.9.3"
-  val circeYaml           = "0.6.1"
-  val decline             = "0.4.2"
-  val kindProjector       = "0.9.6"
-  val pureconfig          = "0.9.1"
+  val log4Cats            = "0.2.0"
+  val bm4                 = "0.3.0-M4"
+  val cats                = "1.5.0"
+  val meowMtl             = "0.2.0"
+  val catsParTemp         = "0.2.0"
+  val circe               = "0.11.0"
+  val circeYaml           = "0.9.0"
+  val decline             = "0.5.0"
+  val kindProjector       = "0.9.9"
+  val pureconfig          = "0.10.0"
   val scalatest           = "3.0.5"
   val macroParadise       = "2.1.1"
-  val macwire             = "2.3.1"
   val logback             = "1.2.3"
-  val simulacrum          = "0.12.0"
-  val fs2                 = "0.10.5"
-  val monix               = "3.0.0-RC1"
-  val monocle             = "1.5.0"
+  val simulacrum          = "0.14.0"
+  val fs2                 = "1.0.2"
+  val monocle             = "1.5.0-cats"
   val scalacheckJava8     = "0.2.0"
   val scalacheckShapeless = "1.1.8"
+  val chimney             = "0.3.0"
 }
