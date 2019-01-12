@@ -79,27 +79,26 @@ object Converters {
     case CompositeSchemaKind.OneOf | CompositeSchemaKind.AnyOf =>
       type S[A] = State[Int, A]
 
-      val schemaz = compositeSchema.schemas.traverse[S, ScalaModel] {
-        schemaOrRef =>
-          val getAndIncSyntheticNumber: S[Int] = State.get[Int] <* State.modify(
-            _ + 1)
+      val schemaz = compositeSchema.schemas.traverse { schemaOrRef =>
+        val getAndIncSyntheticNumber: S[Int] = State.get[Int] <* State.modify(
+          _ + 1)
 
-          val derivedWrappedName: S[SchemaName] = schemaOrRef match {
-            case Left(ref) => SchemaName(refToTypeRef(ref.`$ref`).show).pure[S]
-            case Right(StringSchema(None)) =>
-              SchemaName(Primitive.String.show).pure[S]
-            case Right(NumberSchema(None)) =>
-              SchemaName(Primitive.Double.show).pure[S]
-            case Right(_) =>
-              getAndIncSyntheticNumber.map(num =>
-                SchemaName(s"Anonymous$$$num"))
-          }
+        val derivedWrappedName: S[SchemaName] = schemaOrRef match {
+          case Left(ref) => SchemaName(refToTypeRef(ref.`$ref`).show).pure[S]
+          case Right(StringSchema(None)) =>
+            SchemaName(Primitive.String.show).pure[S]
+          case Right(NumberSchema(None)) =>
+            SchemaName(Primitive.Double.show).pure[S]
+          case Right(_) =>
+            getAndIncSyntheticNumber.map(num => SchemaName(s"Anonymous$$$num"))
+        }
 
-          derivedWrappedName.map { derivedName =>
-            convertSchemaOrRef(derivedName, schemaOrRef).setExtendsClause(
-              ExtendsClause(List(OrdinaryType(compositeName.value))))
-          }
+        derivedWrappedName.map { derivedName =>
+          convertSchemaOrRef(derivedName, schemaOrRef).setExtendsClause(
+            ExtendsClause(List(OrdinaryType(compositeName.value))))
+        }
       }
+
       SealedTraitHierarchy(
         compositeName,
         schemaz.runA(1).value,
