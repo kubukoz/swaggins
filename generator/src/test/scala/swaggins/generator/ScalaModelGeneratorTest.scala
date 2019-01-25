@@ -1,19 +1,28 @@
 package swaggins.generator
 
+import cats.data.ReaderT
 import cats.effect.IO
 import cats.implicits._
 import org.scalatest.Assertion
 import swaggins.BaseTest
+import swaggins.generator.convert.Packages
 import swaggins.openapi.model.OpenApiParserTest
+import cats.mtl.implicits._
 
 class ScalaModelGeneratorTest extends BaseTest {
+  type F[A] = ReaderT[IO, Packages, A]
+
   "generator" when {
     "the sample file is given" should {
       "generate valid code" in runIO {
-        val generator: Generator[IO] = new ScalaCaseClassGenerator[IO]
+        val generator: Generator[F] = new ScalaCaseClassGenerator[F]
 
         val actual =
-          generator.generate(OpenApiParserTest.expected.full).compile.toList
+          generator
+            .generate(OpenApiParserTest.expected.full)
+            .compile
+            .toList
+            .run(Packages.empty)
 
         val expected = fileContent("/expected-scala-models.scala")
           .map(GeneratedFile("models.scala", _))
@@ -25,13 +34,14 @@ class ScalaModelGeneratorTest extends BaseTest {
 
     "the coproducts file is given" should {
       "generate valid code" in runIO {
-        val generator: Generator[IO] = new ScalaCaseClassGenerator[IO]
+        val generator: Generator[F] = new ScalaCaseClassGenerator[F]
 
         val actual =
           generator
             .generate(OpenApiParserTest.expected.coproducts)
             .compile
             .toList
+            .run(Packages.empty)
 
         val expected = fileContent("/expected-coproducts-scala-models.scala")
           .map(GeneratedFile("models.scala", _))

@@ -12,7 +12,7 @@ trait Generator[F[_]] {
   def generate(spec: OpenAPI): Stream[F, GeneratedFile]
 }
 
-class ScalaCaseClassGenerator[F[_]: Sync] extends Generator[F] {
+class ScalaCaseClassGenerator[F[_]: Sync: Converters] extends Generator[F] {
 
   def generate(spec: OpenAPI): Stream[F, GeneratedFile] = {
     val componentList: List[(SchemaName, Able[Schema])] =
@@ -21,7 +21,7 @@ class ScalaCaseClassGenerator[F[_]: Sync] extends Generator[F] {
     val componentStrings: Stream[F, String] =
       Stream
         .emits(componentList)
-        .map((Converters.convertSchemaOrRef _).tupled)
+        .evalMap((Converters[F].convertSchemaOrRef _).tupled)
         .map(_.show)
 
     Stream.emit(componentStrings).evalMap { fileStream =>
