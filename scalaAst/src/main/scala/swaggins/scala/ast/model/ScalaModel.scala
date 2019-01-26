@@ -106,6 +106,41 @@ object ScalaModel {
 }
 
 @deriving(Order)
+final case class Trait(mods: Modifiers,
+                       name: TypeName,
+                       extendsClause: ExtendsClause)
+    extends ScalaModel {
+  override def show: String = show"""${mods}trait $name$extendsClause"""
+}
+
+final case class SingletonObject(mods: Modifiers,
+                                 name: TypeName,
+                                 extendsClause: ExtendsClause,
+                                 body: Body)
+    extends ScalaModel {
+  private val bodyBlock = body.statements match {
+    case Nil => ""
+    case _ =>
+      body.statements.map(_.show.indented(2)).mkString_(" {\n", "\n", "\n}")
+  }
+
+  override def show: String =
+    show"""${mods}object $name$extendsClause$bodyBlock"""
+}
+
+final case class Klass(
+  mods: Modifiers,
+  name: TypeName,
+  //todo newtype this shit
+  fields: NonEmptyList[ClassField],
+  extendsClause: ExtendsClause,
+) extends ScalaModel {
+
+  override def show: String =
+    show"""${mods}class $name(${fields.mkString_("", ", ", "")})$extendsClause"""
+}
+
+@deriving(Order)
 @Lenses
 case class ModelWithCompanion(klass: ScalaModel,
                               companion: Option[ScalaModel]) {
@@ -122,14 +157,6 @@ object ModelWithCompanion {
 
   val klassExtendsClause: Lens[ModelWithCompanion, ExtendsClause] =
     klass.composeLens(ScalaModel.extendsClause)
-}
-
-@deriving(Order)
-final case class Trait(mods: Modifiers,
-                       name: TypeName,
-                       extendsClause: ExtendsClause)
-    extends ScalaModel {
-  override def show: String = show"""${mods}trait $name$extendsClause"""
 }
 
 @deriving(Order)
@@ -254,31 +281,4 @@ object Body {
   val empty: Body = Body(Nil)
 
   def models(models: List[ScalaModel]): Body = Body(models.map(Statement.model))
-}
-
-final case class SingletonObject(mods: Modifiers,
-                                 name: TypeName,
-                                 extendsClause: ExtendsClause,
-                                 body: Body)
-    extends ScalaModel {
-  private val bodyBlock = body.statements match {
-    case Nil => ""
-    case _ =>
-      body.statements.map(_.show.indented(2)).mkString_(" {\n", "\n", "\n}")
-  }
-
-  override def show: String =
-    show"""${mods}object $name$extendsClause$bodyBlock"""
-}
-
-final case class Klass(
-  mods: Modifiers,
-  name: TypeName,
-  //todo newtype this shit
-  fields: NonEmptyList[ClassField],
-  extendsClause: ExtendsClause,
-) extends ScalaModel {
-
-  override def show: String =
-    show"""${mods}class $name(${fields.mkString_("", ", ", "")})$extendsClause"""
 }
