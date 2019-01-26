@@ -1,6 +1,6 @@
 package swaggins.generator.convert
 
-import cats.{~>, Applicative, Monad}
+import cats.{~>, Monad}
 import cats.data._
 import cats.implicits._
 import cats.mtl.{ApplicativeAsk, ApplicativeLocal}
@@ -32,8 +32,10 @@ object Packages {
 
 trait Converters[F[_]] {
 
-  def convertSchemaOrRef(schemaName: SchemaName,
-                         schemaOrRef: Reference.Able[Schema]): F[ScalaModel]
+  def convertSchemaOrRef(
+    schemaName: SchemaName,
+    schemaOrRef: Reference.Able[Schema]
+  ): F[ScalaModel]
 }
 
 object Converters {
@@ -57,10 +59,14 @@ object Converters {
 
               val (tpe, modelOpt) = refSchemaToType(prop.name, prop.schema)
 
-              (CaseClassField(isRequired,
-                              prop.name.transformInto[FieldName],
-                              tpe),
-               modelOpt)
+              (
+                CaseClassField(
+                  isRequired,
+                  prop.name.transformInto[FieldName],
+                  tpe
+                ),
+                modelOpt
+              )
             }
 
             val fields = fieldsWithModels.map(_._1)
@@ -86,7 +92,8 @@ object Converters {
 
       def convertCompositeSchema(
         compositeName: TypeName,
-        compositeSchema: CompositeSchema): F[ScalaModel] =
+        compositeSchema: CompositeSchema
+      ): F[ScalaModel] =
         compositeSchema.kind match {
           case CompositeSchemaKind.OneOf | CompositeSchemaKind.AnyOf =>
             type S[A] = StateT[F, Int, A]
@@ -103,15 +110,19 @@ object Converters {
                 case Right(NumberSchema(None)) =>
                   SchemaName(Primitive.Double.show).pure[S]
                 case Right(_) =>
-                  getAndIncSyntheticNumber.map(num =>
-                    SchemaName(s"Anonymous$$$num"))
+                  getAndIncSyntheticNumber.map(
+                    num => SchemaName(s"Anonymous$$$num")
+                  )
               }
 
               derivedWrappedName.flatMap { derivedName =>
                 StateT
                   .liftF(convertSchemaOrRef(derivedName, schemaOrRef))
-                  .map(_.setExtendsClause(
-                    ExtendsClause(List(OrdinaryType(compositeName.value)))))
+                  .map(
+                    _.setExtendsClause(
+                      ExtendsClause(List(OrdinaryType(compositeName.value)))
+                    )
+                  )
               }
             }
 
@@ -129,25 +140,33 @@ object Converters {
 
       def convertSchemaOrRef(
         schemaName: SchemaName,
-        schemaOrRef: Reference.Able[Schema]): F[ScalaModel] =
+        schemaOrRef: Reference.Able[Schema]
+      ): F[ScalaModel] =
         schemaOrRef match {
           case Right(schema) =>
             convertSchema(TypeName.parse(schemaName.value), schema)
           case Left(ref) =>
-            CaseClass(TypeName.parse(schemaName.value),
-                      NonEmptyList.one(
-                        CaseClassField(required = true,
-                                       FieldName("value"),
-                                       refToTypeRef(ref.`$ref`))),
-                      ExtendsClause.empty).pure[F].widen
+            CaseClass(
+              TypeName.parse(schemaName.value),
+              NonEmptyList.one(
+                CaseClassField(
+                  required = true,
+                  FieldName("value"),
+                  refToTypeRef(ref.`$ref`)
+                )
+              ),
+              ExtendsClause.empty
+            ).pure[F].widen
         }
     }
 
   private def convertDiscriminator(
-    discriminator: Discriminator): model.Discriminator = {
+    discriminator: Discriminator
+  ): model.Discriminator = {
     model.Discriminator(
       discriminator.propertyName.map(_.transformInto[FieldName]),
-      discriminator.mapping.map(_.map(_.transformInto[OrdinaryType])))
+      discriminator.mapping.map(_.map(_.transformInto[OrdinaryType]))
+    )
   }
 
   /**
@@ -155,16 +174,20 @@ object Converters {
     * */
   private def refSchemaToType(
     name: SchemaName,
-    schema: Reference.Able[Schema]): (TypeReference, Option[ScalaModel]) =
+    schema: Reference.Able[Schema]
+  ): (TypeReference, Option[ScalaModel]) =
     schema match {
       case Left(ref)                 => (refToTypeRef(ref.`$ref`), None)
       case Right(NumberSchema(None)) => (Primitive.Double, None)
       case Right(StringSchema(None)) => (Primitive.String, None)
       case Right(StringSchema(Some(values))) =>
         val enumModel = Some(
-          Enumerated(TypeName.parse(name.value),
-                     Primitive.String,
-                     values.map(ScalaLiteral.String(_))))
+          Enumerated(
+            TypeName.parse(name.value),
+            Primitive.String,
+            values.map(ScalaLiteral.String(_))
+          )
+        )
 
         (name.transformInto[OrdinaryType], enumModel)
 

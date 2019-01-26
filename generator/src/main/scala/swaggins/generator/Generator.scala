@@ -5,7 +5,7 @@ import fs2.Stream
 import swaggins.generator.convert.Converters
 import swaggins.openapi.model.OpenAPI
 import swaggins.openapi.model.components.SchemaName
-import swaggins.openapi.model.shared.Reference.Able
+import swaggins.openapi.model.shared.Reference
 import swaggins.openapi.model.shared._
 
 trait Generator[F[_]] {
@@ -15,7 +15,7 @@ trait Generator[F[_]] {
 class ScalaCaseClassGenerator[F[_]: Sync: Converters] extends Generator[F] {
 
   def generate(spec: OpenAPI): Stream[F, GeneratedFile] = {
-    val componentList: List[(SchemaName, Able[Schema])] =
+    val componentList: List[(SchemaName, Reference.Able[Schema])] =
       spec.components.schemas.toSortedMap.toList
 
     val componentStrings: Stream[F, String] =
@@ -26,8 +26,10 @@ class ScalaCaseClassGenerator[F[_]: Sync: Converters] extends Generator[F] {
 
     Stream.emit(componentStrings).evalMap { fileStream =>
       fileStream.compile.toList.map { lines =>
-        GeneratedFile("models.scala",
-                      lines.mkString_("package models\n\n", "\n\n", "\n"))
+        GeneratedFile(
+          "models.scala",
+          lines.mkString_("package models\n\n", "\n\n", "\n")
+        )
       }
     }
   }
