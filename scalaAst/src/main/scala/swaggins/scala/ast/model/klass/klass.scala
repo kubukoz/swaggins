@@ -28,9 +28,6 @@ final case class ClassField(
 object ClassField {
   implicit val show: Show[ClassField] = field =>
     show"""${field.name}: ${field.tpe}"""
-
-  def optional(name: FieldName, typeReference: TypeReference): ClassField =
-    ClassField(name, TypeReference.optional(typeReference))
 }
 
 @deriving(Order)
