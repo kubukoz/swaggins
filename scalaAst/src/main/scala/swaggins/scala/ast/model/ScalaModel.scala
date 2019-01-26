@@ -48,7 +48,7 @@ object ScalaModel {
                      extendsClause: ExtendsClause): ScalaModel =
     Klass(Modifiers.of(Modifier.Final, Modifier.Case),
           name,
-          fields,
+          Constructor(fields),
           extendsClause)
 
   def enumeration(
@@ -71,7 +71,7 @@ object ScalaModel {
     val cls = Klass(
       Modifiers.of(Modifier.Sealed, Modifier.Abstract),
       name,
-      NonEmptyList.one(ClassField(FieldName("value"), underlyingType)),
+      Constructor.withFields(ClassField(FieldName("value"), underlyingType)),
       ExtendsClause.productWithSerializable
     )
 
@@ -129,13 +129,24 @@ final case class SingletonObject(mods: Modifiers,
 final case class Klass(
   mods: Modifiers,
   name: TypeName,
-  //todo newtype this shit
-  fields: NonEmptyList[ClassField],
+  constructor: Constructor,
   extendsClause: ExtendsClause,
 ) extends ScalaModel {
 
   override def show: String =
-    show"""${mods}class $name(${fields.mkString_("", ", ", "")})$extendsClause"""
+    show"""${mods}class $name$constructor$extendsClause"""
+}
+
+@deriving(Order)
+case class Constructor(fields: NonEmptyList[ClassField])
+
+object Constructor {
+
+  def withFields(field1: ClassField, fields: ClassField*): Constructor =
+    Constructor(NonEmptyList(field1, fields.toList))
+
+  implicit val show: Show[Constructor] = cons =>
+    cons.fields.mkString_("(", ", ", ")")
 }
 
 @deriving(Order)
