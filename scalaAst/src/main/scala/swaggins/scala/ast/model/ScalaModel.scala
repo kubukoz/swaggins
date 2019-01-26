@@ -4,7 +4,6 @@ import cats.data.{NonEmptyList, NonEmptySet}
 import cats.implicits._
 import cats.{Order, Show}
 import monocle._
-import monocle.macros.Lenses
 import scalaz.deriving
 import swaggins.core.implicits._
 import swaggins.scala.ast.ref._
@@ -39,7 +38,7 @@ object ScalaModel {
     finalCaseClass(
       name,
       NonEmptyList.one(
-        ClassField(required = true, FieldName("value"), underlying)
+        ClassField(FieldName("value"), underlying)
       ),
       ExtendsClause.anyVal
     )
@@ -72,8 +71,7 @@ object ScalaModel {
     val cls = Klass(
       Modifiers.of(Modifier.Sealed, Modifier.Abstract),
       name,
-      NonEmptyList.one(
-        ClassField(required = true, FieldName("value"), underlyingType)),
+      NonEmptyList.one(ClassField(FieldName("value"), underlyingType)),
       ExtendsClause.productWithSerializable
     )
 
@@ -141,42 +139,17 @@ final case class Klass(
 }
 
 @deriving(Order)
-@Lenses
-case class ModelWithCompanion(klass: ScalaModel,
-                              companion: Option[ScalaModel]) {
-  def asNel: NonEmptyList[ScalaModel] = NonEmptyList(klass, companion.toList)
-}
-
-object ModelWithCompanion {
-
-  def justClass(klass: ScalaModel): ModelWithCompanion =
-    ModelWithCompanion(klass, None)
-
-  def both(klass: ScalaModel, companion: ScalaModel): ModelWithCompanion =
-    ModelWithCompanion(klass, Some(companion))
-
-  val klassExtendsClause: Lens[ModelWithCompanion, ExtendsClause] =
-    klass.composeLens(ScalaModel.extendsClause)
-}
-
-@deriving(Order)
 final case class ClassField(
-  @deprecated required: Boolean,
   name: FieldName,
   tpe: TypeReference
-) {
-
-  def show: String = {
-    val fieldTypeString = {
-      if (required) tpe.show else show"Option[$tpe]"
-    }
-
-    show"""$name: $fieldTypeString"""
-  }
-}
+)
 
 object ClassField {
-  implicit val show: Show[ClassField] = Show.show(_.show)
+  implicit val show: Show[ClassField] = field =>
+    show"""${field.name}: ${field.tpe}"""
+
+  def optional(name: FieldName, typeReference: TypeReference): ClassField =
+    ClassField(name, TypeReference.optional(typeReference))
 }
 
 @deriving(Order)

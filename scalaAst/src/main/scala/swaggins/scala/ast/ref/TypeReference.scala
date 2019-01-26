@@ -17,9 +17,13 @@ object TypeReference {
   def listOf(elementType: TypeReference): TypeReference =
     AppliedType(scalaList, List(elementType), Nil)
 
+  def optional(elementType: TypeReference): TypeReference =
+    AppliedType(scalaOption, List(elementType), Nil)
+
   def byName(typeName: TypeName): TypeReference = OrdinaryType(typeName.value)
 
   val scalaList: TypeReference = OrdinaryType("List")
+  val scalaOption: TypeReference = OrdinaryType("Option")
 }
 
 case class OrdinaryType(value: String) extends TypeReference {

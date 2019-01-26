@@ -60,14 +60,11 @@ object Converters {
 
               val (tpe, modelOpt) = refSchemaToType(prop.name, prop.schema)
 
-              (
-                ClassField(
-                  isRequired,
-                  prop.name.transformInto[FieldName],
-                  tpe
-                ),
-                modelOpt
-              )
+              val field =
+                if (isRequired) ClassField(FieldName(prop.name.value), tpe)
+                else ClassField.optional(FieldName(prop.name.value), tpe)
+
+              (field, modelOpt)
             }
 
             val fields: NonEmptyList[ClassField] = fieldsWithModels.map(_._1)
@@ -155,7 +152,6 @@ object Converters {
               TypeName.parse(schemaName.value),
               NonEmptyList.one(
                 ClassField(
-                  required = true,
                   FieldName("value"),
                   refToTypeRef(ref.`$ref`)
                 )
