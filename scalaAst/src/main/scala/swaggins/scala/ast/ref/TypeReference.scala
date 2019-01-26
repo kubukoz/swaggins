@@ -5,12 +5,21 @@ import cats.implicits._
 import scalaz.{deriving, xderiving}
 import swaggins.core.implicits._
 import swaggins.scala.ast.model.values.ScalaLiteral
+import swaggins.scala.ast.packages.Packages
+
 @deriving(Order)
 sealed trait TypeReference extends Product with Serializable {
   def show: String
 }
 
 object TypeReference {
+
+  def inPackage[F[_]: Packages.Ask](base: TypeReference): F[TypeReference] =
+    Packages.Ask[F].reader { pkg =>
+      //todo create new leaf type for this?
+      OrdinaryType(show"$pkg.$base")
+    }
+
   implicit val show: Show[TypeReference] = _.show
 
   def listOf(elementType: TypeReference): TypeReference =
@@ -21,12 +30,12 @@ object TypeReference {
 
   def byName(typeName: TypeName): TypeReference = OrdinaryType(typeName.value)
 
-  val scalaList: TypeReference = OrdinaryType("List")
+  val scalaList: TypeReference   = OrdinaryType("List")
   val scalaOption: TypeReference = OrdinaryType("Option")
 }
 
-sealed case class OrdinaryType(value: String) extends TypeReference {
-  override def show: String = value.toCamelCase
+final case class OrdinaryType(value: String) extends TypeReference {
+  override val show: String = value
 }
 
 @xderiving(Show)
@@ -40,9 +49,9 @@ object Parameter {
   * An applied (higher-kinded) type, i.e. applied[params]
   * */
 final case class AppliedType(applied: TypeReference,
-                       typeParams: List[TypeReference],
-                       //todo do params belong here?
-                       params: List[Parameter])
+                             typeParams: List[TypeReference],
+                             //todo do params belong here?
+                             params: List[Parameter])
     extends TypeReference {
 
   private val typeParamListString =
@@ -54,8 +63,8 @@ final case class AppliedType(applied: TypeReference,
 }
 
 object Primitive {
-  object Double extends OrdinaryType("Double")
-  object String extends OrdinaryType("String")
+  val double: TypeReference = OrdinaryType("Double")
+  val string: TypeReference = OrdinaryType("String")
 }
 
 @deriving(Order)

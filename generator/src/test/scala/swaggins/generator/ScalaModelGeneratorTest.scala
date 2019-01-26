@@ -5,9 +5,9 @@ import cats.effect.IO
 import cats.implicits._
 import org.scalatest.Assertion
 import swaggins.BaseTest
-import swaggins.generator.convert.Packages
 import swaggins.openapi.model.OpenApiParserTest
 import cats.mtl.implicits._
+import swaggins.scala.ast.packages.Packages
 
 class ScalaModelGeneratorTest extends BaseTest {
   type F[A] = ReaderT[IO, Packages, A]

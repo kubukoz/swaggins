@@ -1,6 +1,6 @@
 package models
 
-final case class Cat(huntingSkill: Option[HuntingSkill])
+final case class Cat(huntingSkill: Option[Cat.HuntingSkill])
 object Cat {
   sealed abstract class HuntingSkill(value: String) extends Product with Serializable
   object HuntingSkill {
@@ -15,7 +15,7 @@ sealed trait Dog extends Product with Serializable
 object Dog {
   final case class Husky(value: Husky) extends Dog
   final case class York(value: York) extends Dog
-  final case class Anonymous$1(name: String, age: Double, gender: Option[Gender]) extends Dog
+  final case class Anonymous$1(name: String, age: Double, gender: Option[Anonymous$1.Gender]) extends Dog
   object Anonymous$1 {
     sealed abstract class Gender(value: String) extends Product with Serializable
     object Gender {
