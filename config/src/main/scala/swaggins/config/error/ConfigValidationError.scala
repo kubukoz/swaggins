@@ -23,6 +23,6 @@ object ConfigValidationError {
       RaiseNel[F].raiseError(NonEmptyList.one(error))
   }
 
-  case class UnknownSources(source: SourceIdentifier)
+  final case class UnknownSources(source: SourceIdentifier)
       extends ConfigValidationError
 }

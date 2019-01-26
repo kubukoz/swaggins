@@ -4,8 +4,7 @@ import cats.{Order, Show}
 import cats.implicits._
 import scalaz.{deriving, xderiving}
 import swaggins.core.implicits._
-import swaggins.scala.ast.model.ScalaLiteral
-
+import swaggins.scala.ast.model.values.ScalaLiteral
 @deriving(Order)
 sealed trait TypeReference extends Product with Serializable {
   def show: String
@@ -26,12 +25,12 @@ object TypeReference {
   val scalaOption: TypeReference = OrdinaryType("Option")
 }
 
-case class OrdinaryType(value: String) extends TypeReference {
+sealed case class OrdinaryType(value: String) extends TypeReference {
   override def show: String = value.toCamelCase
 }
 
 @xderiving(Show)
-case class Parameter(value: String) extends AnyVal
+final case class Parameter(value: String) extends AnyVal
 
 object Parameter {
   val fromLiteral: ScalaLiteral => Parameter = lit => Parameter(lit.show)
@@ -40,7 +39,7 @@ object Parameter {
 /**
   * An applied (higher-kinded) type, i.e. applied[params]
   * */
-case class AppliedType(applied: TypeReference,
+final case class AppliedType(applied: TypeReference,
                        typeParams: List[TypeReference],
                        //todo do params belong here?
                        params: List[Parameter])
@@ -61,7 +60,7 @@ object Primitive {
 
 @deriving(Order)
 @xderiving(Show)
-case class TypeName private (value: String) extends AnyVal
+final case class TypeName private (value: String) extends AnyVal
 
 object TypeName {
   //todo rename to "decode" or "fromSchema"

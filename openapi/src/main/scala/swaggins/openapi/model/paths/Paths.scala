@@ -11,7 +11,7 @@ import swaggins.openapi.model.shared.{Reference, Schema}
 import scalaz.{deriving, xderiving}
 import scala.util.Try
 
-case class Paths(paths: NonEmptySet[Path])
+final case class Paths(paths: NonEmptySet[Path])
 
 object Paths {
   implicit val decoder: Decoder[Paths] =
@@ -26,13 +26,13 @@ object Paths {
   * $synthetic
   * */
 @deriving(Decoder)
-case class Path(path: String, item: PathItem)
+final case class Path(path: String, item: PathItem)
 
 object Path {
   implicit val order: Order[Path] = Order.by(o => (o.path, o.item))
 }
 
-case class PathItem(value: NonEmptyMap[HttpMethod, Operation]) extends AnyVal {
+final case class PathItem(value: NonEmptyMap[HttpMethod, Operation]) extends AnyVal {
   def get: Option[Operation] = value.lookup(HttpMethod.Get)
 }
 
@@ -59,10 +59,10 @@ object HttpMethod extends Enum[HttpMethod] {
 }
 
 @deriving(Decoder)
-case class Operation(responses: Responses)
+final case class Operation(responses: Responses)
 
 @xderiving(Decoder)
-case class Responses(value: NonEmptyMap[StatusCode, Response]) extends AnyVal
+final case class Responses(value: NonEmptyMap[StatusCode, Response]) extends AnyVal
 
 object Responses {
 //   //empty companion object to fix xderiving 
@@ -71,7 +71,7 @@ object Responses {
 /**
   * $synthetic
   * */
-case class StatusCode(value: Int) extends AnyVal
+final case class StatusCode(value: Int) extends AnyVal
 
 object StatusCode {
   implicit val order: Order[StatusCode] = Order.by(_.value)
@@ -81,12 +81,12 @@ object StatusCode {
 }
 
 @deriving(Decoder)
-case class Response(content: Option[Content])
+final case class Response(content: Option[Content])
 
 /**
   * $synthetic
   * */
-case class Content(json: MediaType) extends AnyVal
+final case class Content(json: MediaType) extends AnyVal
 
 object Content {
   implicit val decoder: Decoder[Content] =
@@ -94,4 +94,4 @@ object Content {
 }
 
 @deriving(Decoder)
-case class MediaType(schema: Option[Reference.Able[Schema]])
+final case class MediaType(schema: Option[Reference.Able[Schema]])

@@ -1,6 +1,6 @@
 package swaggins.generator.convert
 
-import cats.{~>, Monad}
+import cats.{Monad, ~>}
 import cats.data._
 import cats.implicits._
 import cats.mtl.{ApplicativeAsk, ApplicativeLocal}
@@ -9,10 +9,13 @@ import swaggins.openapi.model.components.SchemaName
 import swaggins.openapi.model.shared.ReferenceRef.ComponentRef
 import swaggins.openapi.model.shared._
 import swaggins.scala.ast.model._
+import swaggins.scala.ast.model.body.Body
+import swaggins.scala.ast.model.klass.{ClassField, FieldName}
+import swaggins.scala.ast.model.values.ScalaLiteral
 import swaggins.scala.ast.ref._
 
-case class PackageName(value: String) extends AnyVal
-case class Packages(value: List[PackageName]) {
+final case class PackageName(value: String) extends AnyVal
+final case class Packages(value: List[PackageName]) {
   def added(pkg: PackageName): Packages = copy(pkg :: value)
 }
 
@@ -74,10 +77,9 @@ object Converters {
 
             val companion: Option[ScalaModel] = models.map(
               models =>
-                SingletonObject(Modifiers.empty,
-                                typeName,
-                                ExtendsClause.empty,
-                                Body.models(models.flatMap(_.asNel).toList)))
+                ScalaModel.companionObject(
+                  typeName,
+                  Body.models(models.flatMap(_.asNel).toList)))
 
             ModelWithCompanion(
               ScalaModel.finalCaseClass(typeName, fields, ExtendsClause.empty),

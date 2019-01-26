@@ -9,12 +9,12 @@ import io.circe.{Decoder, KeyDecoder}
 import swaggins.openapi.model.shared.{Reference, Schema}
 
 @deriving(Decoder)
-case class Components(schemas: NonEmptyMap[SchemaName, Reference.Able[Schema]])
+final case class Components(schemas: NonEmptyMap[SchemaName, Reference.Able[Schema]])
 
 /**
   * $synthetic
   * */
-case class SchemaName(value: String) extends AnyVal
+final case class SchemaName(value: String) extends AnyVal
 
 object SchemaName {
   implicit val order: Order[SchemaName]     = Order.by(_.value)

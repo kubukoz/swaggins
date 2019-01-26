@@ -6,7 +6,7 @@ import scalaz.deriving
 import io.circe.Decoder
 
 @deriving(Decoder)
-case class OpenAPI(
+final case class OpenAPI(
   openapi: String,
   info: Info,
   paths: Paths,
@@ -14,4 +14,4 @@ case class OpenAPI(
 )
 
 @deriving(Decoder)
-case class Info(version: String, title: String)
+final case class Info(version: String, title: String)

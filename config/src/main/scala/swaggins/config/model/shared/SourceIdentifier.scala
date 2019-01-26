@@ -4,7 +4,7 @@ import cats.Order
 import io.circe.KeyDecoder
 import cats.implicits._
 
-case class SourceIdentifier(value: String) extends AnyVal
+final case class SourceIdentifier(value: String) extends AnyVal
 
 object SourceIdentifier {
   implicit val order: Order[SourceIdentifier] = Order.by(_.value)

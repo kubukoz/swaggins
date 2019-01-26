@@ -7,7 +7,7 @@ import cats.implicits._
 import scalaz.deriving
 
 @deriving(Decoder)
-case class Reference(`$ref`: ReferenceRef)
+final case class Reference(`$ref`: ReferenceRef)
 
 object Reference {
   //a reference-able type.
@@ -24,7 +24,7 @@ object Reference {
 sealed trait ReferenceRef extends Product with Serializable
 
 object ReferenceRef {
-  case class ComponentRef(name: SchemaName) extends ReferenceRef
+  final case class ComponentRef(name: SchemaName) extends ReferenceRef
 
   object ComponentRef {
     implicit val decoder: Decoder[ComponentRef] = {

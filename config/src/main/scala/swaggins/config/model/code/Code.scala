@@ -7,21 +7,21 @@ import cats.implicits._
 import scalaz.deriving
 import swaggins.config.model.shared.SourceIdentifier
 
-case class Code(value: NonEmptyMap[SourceIdentifier, SourceSpecs])
+final case class Code(value: NonEmptyMap[SourceIdentifier, SourceSpecs])
     extends AnyVal
 
 object Code {
   implicit val decoder: Decoder[Code] = deriveUnwrappedDecoder
 }
 
-case class SourceSpecs(value: NonEmptyMap[SpecIdentifier, SpecGenerators])
+final case class SourceSpecs(value: NonEmptyMap[SpecIdentifier, SpecGenerators])
     extends AnyVal
 
 object SourceSpecs {
   implicit val decoder: Decoder[SourceSpecs] = deriveUnwrappedDecoder
 }
 
-case class SpecIdentifier(name: String, version: String)
+final case class SpecIdentifier(name: String, version: String)
 
 object SpecIdentifier {
   implicit val decoder: KeyDecoder[SpecIdentifier] = KeyDecoder.instance {
@@ -35,14 +35,14 @@ object SpecIdentifier {
     Order.by(ident => (ident.name, ident.version))
 }
 
-case class SpecGenerators(value: NonEmptyMap[GeneratorKey, GeneratorConfig])
+final case class SpecGenerators(value: NonEmptyMap[GeneratorKey, GeneratorConfig])
     extends AnyVal
 
 object SpecGenerators {
   implicit val decoder: Decoder[SpecGenerators] = deriveUnwrappedDecoder
 }
 
-case class GeneratorKey(value: String) extends AnyVal
+final case class GeneratorKey(value: String) extends AnyVal
 
 object GeneratorKey {
   implicit val decoder: KeyDecoder[GeneratorKey] =
@@ -52,4 +52,4 @@ object GeneratorKey {
 }
 
 @deriving(Decoder)
-case class GeneratorConfig(path: String)
+final case class GeneratorConfig(path: String)

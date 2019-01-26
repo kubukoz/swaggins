@@ -31,7 +31,7 @@ object Schema {
   }
 }
 
-case class CompositeSchema(schemas: NonEmptyList[Reference.Able[Schema]],
+final case class CompositeSchema(schemas: NonEmptyList[Reference.Able[Schema]],
                            kind: CompositeSchemaKind,
                            discriminator: Option[Discriminator])
     extends Schema
@@ -86,7 +86,7 @@ object CompositeSchema {
 }
 
 @deriving(Decoder)
-case class Discriminator(propertyName: Option[SchemaName],
+final case class Discriminator(propertyName: Option[SchemaName],
                          mapping: Option[NonEmptyMap[String, SchemaName]])
 
 /**
@@ -108,7 +108,7 @@ object CompositeSchemaKind extends Enum[CompositeSchemaKind] {
   * $synthetic
   * */
 @deriving(Decoder)
-case class ObjectSchema(
+final case class ObjectSchema(
   required: Option[NonEmptySet[SchemaName]],
   properties: NonEmptyList[Property]
 ) extends Schema
@@ -147,13 +147,13 @@ object ObjectSchema {
 /**
   * $synthetic
   * */
-case class Property(name: SchemaName, schema: Reference.Able[Schema])
+final case class Property(name: SchemaName, schema: Reference.Able[Schema])
 
 /**
   * $synthetic
   * */
 @deriving(Decoder)
-case class ArraySchema(
+final case class ArraySchema(
   items: Reference.Able[Schema]
 ) extends Schema
 
@@ -165,14 +165,14 @@ sealed trait PrimitiveSchema[Literal] extends Schema {
   * $synthetic
   * */
 @deriving(Decoder)
-case class NumberSchema(enum: Option[NonEmptySet[Double]])
+final case class NumberSchema(enum: Option[NonEmptySet[Double]])
     extends PrimitiveSchema[Double]
 
 /**
   * $synthetic
   * */
 @deriving(Decoder)
-case class StringSchema(enum: Option[NonEmptySet[String]])
+final case class StringSchema(enum: Option[NonEmptySet[String]])
     extends PrimitiveSchema[String]
 
 /**

@@ -6,4 +6,4 @@ import swaggins.config.model.code.Code
 import swaggins.config.model.sources.Sources
 
 @deriving(Decoder)
-case class SwagginsConfig(code: Code, sources: Sources)
+final case class SwagginsConfig(code: Code, sources: Sources)
