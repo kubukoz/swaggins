@@ -7,9 +7,8 @@ import swaggins.core.implicits._
 import swaggins.scala.ast.ref.{OrdinaryType, TypeName, TypeReference}
 
 sealed trait ScalaModel extends Product with Serializable {
-  type Self <: ScalaModel
   def show: String
-  def setExtendsClause(extendsClause: ExtendsClause): Self
+  def setExtendsClause(extendsClause: ExtendsClause): ScalaModel
 }
 
 object ScalaModel {
@@ -22,15 +21,14 @@ case class CompanionObject(models: List[ScalaModel]) {
   |}""".stripMargin
 }
 
-case class CaseClass(name: TypeName,
-                     fields: NonEmptyList[CaseClassField],
-                     extendsClause: ExtendsClause,
-                     companionObject: Option[CompanionObject] = None)
-    extends ScalaModel {
+case class CaseClass(
+  name: TypeName,
+  fields: NonEmptyList[CaseClassField],
+  extendsClause: ExtendsClause,
+  companionObject: Option[CompanionObject] = None
+) extends ScalaModel {
 
-  override type Self = CaseClass
-
-  override def setExtendsClause(extendsClause: ExtendsClause): CaseClass =
+  override def setExtendsClause(extendsClause: ExtendsClause): ScalaModel =
     copy(extendsClause = extendsClause)
 
   private val newlineAndCompanion =
@@ -42,15 +40,20 @@ case class CaseClass(name: TypeName,
 object ValueClass {
 
   def apply(name: TypeName, tpe: TypeReference): CaseClass =
-    CaseClass(name,
-              NonEmptyList.one(
-                CaseClassField(required = true, FieldName("value"), tpe)),
-              ExtendsClause.anyVal)
+    CaseClass(
+      name,
+      NonEmptyList.one(
+        CaseClassField(required = true, FieldName("value"), tpe)
+      ),
+      ExtendsClause.anyVal
+    )
 }
 
-case class CaseClassField(required: Boolean,
-                          name: FieldName,
-                          tpe: TypeReference) {
+case class CaseClassField(
+  required: Boolean,
+  name: FieldName,
+  tpe: TypeReference
+) {
 
   def show: String = {
     val fieldTypeString = {
@@ -82,24 +85,23 @@ object ExtendsClause {
   val empty: ExtendsClause = ExtendsClause(Nil)
 
   val productWithSerializable = ExtendsClause(
-    List(OrdinaryType("Product"), OrdinaryType("Serializable")))
+    List(OrdinaryType("Product"), OrdinaryType("Serializable"))
+  )
 
   val anyVal = ExtendsClause(List(OrdinaryType("AnyVal")))
 }
 
-case class SealedTraitHierarchy(name: TypeName,
-                                inhabitants: NonEmptyList[ScalaModel],
-                                discriminator: Option[Discriminator],
-                                extendsClause: ExtendsClause =
-                                  ExtendsClause.productWithSerializable)
-    extends ScalaModel {
+case class SealedTraitHierarchy(
+  name: TypeName,
+  inhabitants: NonEmptyList[ScalaModel],
+  discriminator: Option[Discriminator],
+  extendsClause: ExtendsClause = ExtendsClause.productWithSerializable
+) extends ScalaModel {
 
-  override type Self = SealedTraitHierarchy
   private val inhabitantsShow: String =
     inhabitants.map(_.show).mkString_("", "\n", "")
 
-  override def setExtendsClause(
-    extendsClause: ExtendsClause): SealedTraitHierarchy =
+  override def setExtendsClause(extendsClause: ExtendsClause): ScalaModel =
     copy(extendsClause = extendsClause)
 
   override def show: String =
@@ -110,8 +112,10 @@ case class SealedTraitHierarchy(name: TypeName,
           |}""".stripMargin
 }
 
-case class Discriminator(propertyName: Option[FieldName],
-                         mapping: Option[NonEmptyMap[String, OrdinaryType]])
+case class Discriminator(
+  propertyName: Option[FieldName],
+  mapping: Option[NonEmptyMap[String, OrdinaryType]]
+)
 
 sealed trait ScalaLiteral extends Product with Serializable {
 
@@ -136,16 +140,14 @@ case class Enumerated[Literal <: ScalaLiteral: Show](
   name: TypeName,
   underlyingType: TypeReference,
   values: NonEmptySet[Literal],
-  extendsClause: ExtendsClause = ExtendsClause.productWithSerializable)
-    extends ScalaModel {
+  extendsClause: ExtendsClause = ExtendsClause.productWithSerializable
+) extends ScalaModel {
 
-  override type Self = Enumerated[Literal]
   private val inhabitantsShow: String = values.map { str =>
     show"""case object ${str.asTypeName} extends $name("$str")"""
   }.mkString_("", "\n", "")
 
-  override def setExtendsClause(
-    extendsClause: ExtendsClause): Enumerated[Literal] =
+  override def setExtendsClause(extendsClause: ExtendsClause): ScalaModel =
     copy(extendsClause = extendsClause)
 
   override def show: String =
