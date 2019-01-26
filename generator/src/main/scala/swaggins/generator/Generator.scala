@@ -21,8 +21,11 @@ class ScalaCaseClassGenerator[F[_]: Sync: Converters] extends Generator[F] {
     val componentStrings: Stream[F, String] =
       Stream
         .emits(componentList)
-        .evalMap((Converters[F].convertSchemaOrRef _).tupled)
-        .map(_.show)
+        .evalMap {
+          case (name, ref) =>
+            Converters[F].convertSchemaOrRef(name, ref)
+        }
+        .map(_.asNel.mkString_("", "\n", ""))
 
     Stream.emit(componentStrings).evalMap { fileStream =>
       fileStream.compile.toList.map { lines =>

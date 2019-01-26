@@ -13,14 +13,17 @@ sealed trait TypeReference extends Product with Serializable {
 
 object TypeReference {
   implicit val show: Show[TypeReference] = _.show
+
+  def listOf(elementType: TypeReference): TypeReference =
+    AppliedType(scalaList, List(elementType), Nil)
+
+  def byName(typeName: TypeName): TypeReference = OrdinaryType(typeName.value)
+
+  val scalaList: TypeReference = OrdinaryType("List")
 }
 
 case class OrdinaryType(value: String) extends TypeReference {
   override def show: String = value.toCamelCase
-}
-
-case class ListType(itemType: TypeReference) extends TypeReference {
-  override def show: String = show"""List[$itemType]"""
 }
 
 @xderiving(Show)
@@ -30,8 +33,12 @@ object Parameter {
   val fromLiteral: ScalaLiteral => Parameter = lit => Parameter(lit.show)
 }
 
-case class AppliedType(applied: TypeName,
+/**
+  * An applied (higher-kinded) type, i.e. applied[params]
+  * */
+case class AppliedType(applied: TypeReference,
                        typeParams: List[TypeReference],
+                       //todo do params belong here?
                        params: List[Parameter])
     extends TypeReference {
 
@@ -53,6 +60,7 @@ object Primitive {
 case class TypeName private (value: String) extends AnyVal
 
 object TypeName {
+  //todo rename to "decode" or "fromSchema"
   def parse(value: String): TypeName = TypeName(value.toCamelCase)
   def raw(value: String): TypeName   = TypeName(value)
 }

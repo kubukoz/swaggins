@@ -1,12 +1,13 @@
 package swaggins.scala.ast.model
 
-import cats.data.{NonEmptyList, NonEmptyMap, NonEmptySet}
+import cats.data.{NonEmptyList, NonEmptySet}
 import cats.implicits._
 import cats.{Order, Show}
+import monocle._
+import monocle.macros.Lenses
+import scalaz.deriving
 import swaggins.core.implicits._
 import swaggins.scala.ast.ref._
-import monocle._
-import scalaz.deriving
 
 @deriving(Order)
 sealed trait ScalaModel extends Product with Serializable {
@@ -18,46 +19,122 @@ object ScalaModel {
 
   val extendsClause: Lens[ScalaModel, ExtendsClause] =
     Lens[ScalaModel, ExtendsClause] {
-      case CaseClass(_, _, clause, _)            => clause
-      case SealedTraitHierarchy(_, _, _, clause) => clause
-      case Enumerated(_, _, _, clause)           => clause
+      case c: Klass             => c.extendsClause
+      case t: Trait             => t.extendsClause
+      case obj: SingletonObject => obj.extendsClause
     } { clause =>
       {
-        case cc: CaseClass             => cc.copy(extendsClause = clause)
-        case adt: SealedTraitHierarchy => adt.copy(extendsClause = clause)
-        case enum: Enumerated          => enum.copy(extendsClause = clause)
+        case cc: Klass            => cc.copy(extendsClause = clause)
+        case t: Trait             => t.copy(extendsClause = clause)
+        case obj: SingletonObject => obj.copy(extendsClause = clause)
       }
     }
-}
 
-@deriving(Order)
-final case class CompanionObject(name: TypeName,
-                                 models: NonEmptyList[ScalaModel])
+  def caseObject(name: TypeName,
+                 extendsClause: ExtendsClause,
+                 body: Body): ScalaModel =
+    SingletonObject(Modifiers.of(Modifier.Case), name, extendsClause, body)
 
-object CompanionObject {
-  implicit val show: Show[CompanionObject] = {
-    case CompanionObject(name, models) =>
-      show"""object $name {
-            |${models.mkString_("", "\n", "").indented(2)}
-            |}""".stripMargin
-  }
-}
-
-object ValueClass {
-
-  def apply(name: TypeName, tpe: TypeReference): CaseClass =
-    CaseClass(
+  def valueClass(name: TypeName, underlying: TypeReference): ScalaModel =
+    finalCaseClass(
       name,
       NonEmptyList.one(
-        CaseClassField(required = true, FieldName("value"), tpe)
+        ClassField(required = true, FieldName("value"), underlying)
       ),
       ExtendsClause.anyVal
     )
+
+  def finalCaseClass(name: TypeName,
+                     fields: NonEmptyList[ClassField],
+                     extendsClause: ExtendsClause): ScalaModel =
+    Klass(Modifiers.of(Modifier.Final, Modifier.Case),
+          name,
+          fields,
+          extendsClause)
+
+  def enumeration(
+    name: TypeName,
+    underlyingType: TypeReference,
+    values: NonEmptySet[ScalaLiteral]
+  ): ModelWithCompanion = {
+
+    val inhabitantModels: NonEmptySet[ScalaModel] = values.map { str =>
+      ScalaModel.caseObject(
+        str.asTypeName,
+        ExtendsClause.appliedType(TypeReference.byName(name),
+                                  Parameter.fromLiteral(str) :: Nil),
+        Body.empty): ScalaModel
+    }
+
+    /**
+      * The base class for enum implementations
+      * */
+    val cls = Klass(
+      Modifiers.of(Modifier.Sealed, Modifier.Abstract),
+      name,
+      NonEmptyList.one(
+        ClassField(required = true, FieldName("value"), underlyingType)),
+      ExtendsClause.productWithSerializable
+    )
+
+    /**
+      * The object with enum implementations
+      * */
+    val obj = SingletonObject(Modifiers.empty,
+                              name,
+                              ExtendsClause.empty,
+                              Body.models(inhabitantModels.toList))
+
+    ModelWithCompanion.both(cls, obj)
+  }
+
+  def sealedTraitHierarchy(
+    name: TypeName,
+    inhabitants: NonEmptyList[ScalaModel]
+  ): ModelWithCompanion = {
+    val rootNode = sealedTrait(name, ExtendsClause.productWithSerializable)
+
+    val leafNodes = SingletonObject(Modifiers.empty,
+                                    name,
+                                    ExtendsClause.empty,
+                                    Body.models(inhabitants.toList))
+    ModelWithCompanion.both(rootNode, leafNodes)
+  }
+
+  def sealedTrait(name: TypeName, extendsClause: ExtendsClause): ScalaModel =
+    Trait(Modifiers.of(Modifier.Sealed), name, extendsClause)
 }
 
 @deriving(Order)
-final case class CaseClassField(
-  required: Boolean,
+@Lenses
+case class ModelWithCompanion(klass: ScalaModel,
+                              companion: Option[ScalaModel]) {
+  def asNel: NonEmptyList[ScalaModel] = NonEmptyList(klass, companion.toList)
+}
+
+object ModelWithCompanion {
+
+  def justClass(klass: ScalaModel): ModelWithCompanion =
+    ModelWithCompanion(klass, None)
+
+  def both(klass: ScalaModel, companion: ScalaModel): ModelWithCompanion =
+    ModelWithCompanion(klass, Some(companion))
+
+  val klassExtendsClause: Lens[ModelWithCompanion, ExtendsClause] =
+    klass.composeLens(ScalaModel.extendsClause)
+}
+
+@deriving(Order)
+final case class Trait(mods: Modifiers,
+                       name: TypeName,
+                       extendsClause: ExtendsClause)
+    extends ScalaModel {
+  override def show: String = show"""${mods}trait $name$extendsClause"""
+}
+
+@deriving(Order)
+final case class ClassField(
+  @deprecated required: Boolean,
   name: FieldName,
   tpe: TypeReference
 ) {
@@ -71,8 +148,8 @@ final case class CaseClassField(
   }
 }
 
-object CaseClassField {
-  implicit val show: Show[CaseClassField] = Show.show(_.show)
+object ClassField {
+  implicit val show: Show[ClassField] = Show.show(_.show)
 }
 
 @deriving(Order)
@@ -100,15 +177,9 @@ object ExtendsClause {
 
   def single(ref: TypeReference): ExtendsClause = apply(List(ref))
 
-  def appliedType(name: TypeName, params: List[Parameter]): ExtendsClause =
-    single(AppliedType(name, Nil, params))
+  def appliedType(ref: TypeReference, params: List[Parameter]): ExtendsClause =
+    single(AppliedType(ref, Nil, params))
 }
-
-@deriving(Order)
-final case class Discriminator(
-  propertyName: Option[FieldName],
-  mapping: Option[NonEmptyMap[String, OrdinaryType]]
-)
 
 @deriving(Order)
 sealed trait ScalaLiteral extends Product with Serializable {
@@ -133,54 +204,81 @@ object ScalaLiteral {
   }
 }
 
-final case class CaseObject(name: TypeName, extendsClause: ExtendsClause)
+@deriving(Order)
+sealed trait Modifier extends Product with Serializable
+
+object Modifier {
+  case object Sealed   extends Modifier
+  case object Abstract extends Modifier
+  case object Final    extends Modifier
+  case object Case     extends Modifier
+
+  implicit val show: Show[Modifier] = {
+    case Case     => "case"
+    case Final    => "final"
+    case Sealed   => "sealed"
+    case Abstract => "abstract"
+  }
+}
+
+@deriving(Order)
+case class Modifiers(value: List[Modifier]) extends AnyVal
+
+object Modifiers {
+  val empty: Modifiers               = Modifiers(Nil)
+  def of(mods: Modifier*): Modifiers = Modifiers(mods.toList)
+
+  implicit val show: Show[Modifiers] = {
+    case `empty`         => ""
+    case Modifiers(mods) => mods.mkString_("", " ", " ")
+  }
+}
+
+@deriving(Order)
+sealed trait Statement extends Product with Serializable
+
+object Statement {
+  case class ModelStatement(model: ScalaModel) extends Statement
+
+  def model(underlying: ScalaModel): Statement = ModelStatement(underlying)
+
+  implicit val show: Show[Statement] = {
+    case ModelStatement(model) => model.show
+  }
+}
+
+@deriving(Order)
+final case class Body(statements: List[Statement])
+
+object Body {
+  val empty: Body = Body(Nil)
+
+  def models(models: List[ScalaModel]): Body = Body(models.map(Statement.model))
+}
+
+final case class SingletonObject(mods: Modifiers,
+                                 name: TypeName,
+                                 extendsClause: ExtendsClause,
+                                 body: Body)
     extends ScalaModel {
-  override def show: String = show"""case object $name$extendsClause"""
-}
-
-final case class CaseClass(
-  name: TypeName,
-  fields: NonEmptyList[CaseClassField],
-  extendsClause: ExtendsClause,
-  companionObject: Option[CompanionObject] = None
-) extends ScalaModel {
-
-  private val newlineAndCompanion =
-    companionObject.foldMap(comp => "\n" + comp.show)
-
-  override def show: String =
-    show"""final case class $name(${fields.mkString_("", ", ", "")})$extendsClause$newlineAndCompanion"""
-}
-
-final case class Enumerated(
-  name: TypeName,
-  underlyingType: TypeReference,
-  values: NonEmptySet[ScalaLiteral],
-  extendsClause: ExtendsClause = ExtendsClause.productWithSerializable
-) extends ScalaModel {
-
-  private val inhabitantModels: NonEmptySet[ScalaModel] = values.map { str =>
-    CaseObject(str.asTypeName,
-               ExtendsClause.appliedType(
-                 name,
-                 Parameter.fromLiteral(str) :: Nil)): ScalaModel
+  private val bodyBlock = body.statements match {
+    case Nil => ""
+    case _ =>
+      body.statements.map(_.show.indented(2)).mkString_(" {\n", "\n", "\n}")
   }
 
   override def show: String =
-    show"""sealed abstract class $name(value: $underlyingType)$extendsClause
-          |
-          |${CompanionObject(name, inhabitantModels.toNonEmptyList)}""".stripMargin
+    show"""${mods}object $name$extendsClause$bodyBlock"""
 }
 
-final case class SealedTraitHierarchy(
+final case class Klass(
+  mods: Modifiers,
   name: TypeName,
-  inhabitants: NonEmptyList[ScalaModel],
-  discriminator: Option[Discriminator],
-  extendsClause: ExtendsClause = ExtendsClause.productWithSerializable
+  //todo newtype this shit
+  fields: NonEmptyList[ClassField],
+  extendsClause: ExtendsClause,
 ) extends ScalaModel {
 
   override def show: String =
-    show"""sealed trait $name$extendsClause
-          |
-          |${CompanionObject(name, inhabitants)}""".stripMargin
+    show"""${mods}class $name(${fields.mkString_("", ", ", "")})$extendsClause"""
 }

@@ -8,8 +8,7 @@ import io.scalaland.chimney.dsl._
 import swaggins.openapi.model.components.SchemaName
 import swaggins.openapi.model.shared.ReferenceRef.ComponentRef
 import swaggins.openapi.model.shared._
-import swaggins.scala.ast.model
-import swaggins.scala.ast.model.{Discriminator => _, _}
+import swaggins.scala.ast.model._
 import swaggins.scala.ast.ref._
 
 case class PackageName(value: String) extends AnyVal
@@ -35,7 +34,7 @@ trait Converters[F[_]] {
   def convertSchemaOrRef(
     schemaName: SchemaName,
     schemaOrRef: Reference.Able[Schema]
-  ): F[ScalaModel]
+  ): F[ModelWithCompanion]
 }
 
 object Converters {
@@ -52,7 +51,8 @@ object Converters {
       /**
         * Converts an OpenAPI Schema to a Scala model (e.g. a case class or an ADT).
         * */
-      def convertSchema(typeName: TypeName, schema: Schema): F[ScalaModel] = {
+      private def convertSchema(typeName: TypeName,
+                                schema: Schema): F[ModelWithCompanion] = {
         schema match {
           case ObjectSchema(required, properties) =>
             val fieldsWithModels = properties.map { prop =>
@@ -61,7 +61,7 @@ object Converters {
               val (tpe, modelOpt) = refSchemaToType(prop.name, prop.schema)
 
               (
-                CaseClassField(
+                ClassField(
                   isRequired,
                   prop.name.transformInto[FieldName],
                   tpe
@@ -70,20 +70,31 @@ object Converters {
               )
             }
 
-            val fields = fieldsWithModels.map(_._1)
-            val models = fieldsWithModels.toList.flatMap(_._2)
+            val fields: NonEmptyList[ClassField] = fieldsWithModels.map(_._1)
 
-            val companion = models.toNel.map(CompanionObject(typeName, _))
+            val models: Option[NonEmptyList[ModelWithCompanion]] =
+              fieldsWithModels.toList.mapFilter(_._2).toNel
 
-            CaseClass(typeName, fields, ExtendsClause.empty, companion)
-              .pure[F]
-              .widen
+            val companion: Option[ScalaModel] = models.map(
+              models =>
+                SingletonObject(Modifiers.empty,
+                                typeName,
+                                ExtendsClause.empty,
+                                Body.models(models.flatMap(_.asNel).toList)))
+
+            ModelWithCompanion(
+              ScalaModel.finalCaseClass(typeName, fields, ExtendsClause.empty),
+              companion).pure[F]
 
           case NumberSchema(None) =>
-            ValueClass(typeName, Primitive.Double).pure[F].widen
+            ModelWithCompanion
+              .justClass(ScalaModel.valueClass(typeName, Primitive.Double))
+              .pure[F]
 
           case StringSchema(None) =>
-            ValueClass(typeName, Primitive.String).pure[F].widen
+            ModelWithCompanion
+              .justClass(ScalaModel.valueClass(typeName, Primitive.String))
+              .pure[F]
 
           case comp: CompositeSchema =>
             convertCompositeSchema(typeName, comp)
@@ -93,7 +104,7 @@ object Converters {
       def convertCompositeSchema(
         compositeName: TypeName,
         compositeSchema: CompositeSchema
-      ): F[ScalaModel] =
+      ): F[ModelWithCompanion] =
         compositeSchema.kind match {
           case CompositeSchemaKind.OneOf | CompositeSchemaKind.AnyOf =>
             type S[A] = StateT[F, Int, A]
@@ -116,58 +127,45 @@ object Converters {
               }
 
               derivedWrappedName.flatMap { derivedName =>
-                StateT
-                  .liftF(convertSchemaOrRef(derivedName, schemaOrRef))
-                  .map(
-                    ScalaModel.extendsClause.set(
-                      ExtendsClause(List(OrdinaryType(compositeName.value)))
-                    )
+                StateT.liftF(convertSchemaOrRef(derivedName, schemaOrRef)).map {
+                  ModelWithCompanion.klassExtendsClause.set(
+                    ExtendsClause(List(OrdinaryType(compositeName.value)))
                   )
+                }
               }
             }
 
-            schemaz
-              .runA(1)
-              .map { a =>
-                SealedTraitHierarchy(
-                  compositeName,
-                  a,
-                  compositeSchema.discriminator.map(convertDiscriminator)
-                )
-              }
-              .widen
+            schemaz.runA(1).map { leafNodeModels =>
+              ScalaModel.sealedTraitHierarchy(
+                compositeName,
+                leafNodeModels.flatMap(_.asNel)
+              )
+            }
         }
 
-      def convertSchemaOrRef(
+      override def convertSchemaOrRef(
         schemaName: SchemaName,
         schemaOrRef: Reference.Able[Schema]
-      ): F[ScalaModel] =
+      ): F[ModelWithCompanion] =
         schemaOrRef match {
           case Right(schema) =>
             convertSchema(TypeName.parse(schemaName.value), schema)
           case Left(ref) =>
-            CaseClass(
+            val klazz = ScalaModel.finalCaseClass(
               TypeName.parse(schemaName.value),
               NonEmptyList.one(
-                CaseClassField(
+                ClassField(
                   required = true,
                   FieldName("value"),
                   refToTypeRef(ref.`$ref`)
                 )
               ),
               ExtendsClause.empty
-            ).pure[F].widen
+            )
+
+            ModelWithCompanion.justClass(klazz).pure[F]
         }
     }
-
-  private def convertDiscriminator(
-    discriminator: Discriminator
-  ): model.Discriminator = {
-    model.Discriminator(
-      discriminator.propertyName.map(_.transformInto[FieldName]),
-      discriminator.mapping.map(_.map(_.transformInto[OrdinaryType]))
-    )
-  }
 
   /**
     * Resolves a schema/reference to a type reference and (optionally) a synthetic type.
@@ -175,24 +173,23 @@ object Converters {
   private def refSchemaToType(
     name: SchemaName,
     schema: Reference.Able[Schema]
-  ): (TypeReference, Option[ScalaModel]) =
+  ): (TypeReference, Option[ModelWithCompanion]) =
     schema match {
       case Left(ref)                 => (refToTypeRef(ref.`$ref`), None)
       case Right(NumberSchema(None)) => (Primitive.Double, None)
       case Right(StringSchema(None)) => (Primitive.String, None)
       case Right(StringSchema(Some(values))) =>
-        val enumModel = Some(
-          Enumerated(
+        val enumModel =
+          ScalaModel.enumeration(
             TypeName.parse(name.value),
             Primitive.String,
             values.map(ScalaLiteral.string(_))
           )
-        )
 
-        (name.transformInto[OrdinaryType], enumModel)
+        (name.transformInto[OrdinaryType], Some(enumModel))
 
       case Right(ArraySchema(items)) =>
         val (childType, childModel) = refSchemaToType(name, items)
-        (ListType(childType), childModel)
+        (TypeReference.listOf(childType), childModel)
     }
 }
