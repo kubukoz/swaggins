@@ -2,7 +2,6 @@ package swaggins.core
 
 import java.nio.file.Path
 
-import cats.MonadError
 import cats.effect.{ContextShift, Sync}
 import cats.implicits._
 import fs2.text
@@ -23,7 +22,7 @@ class Parser private[core] (
     FileReader[F].readFile(path).flatMap(decode[F, T])
   }
 
-  private def decode[F[_]: MonadError[?[_], Throwable], T: Decoder](
+  private def decode[F[_]: MonadThrow, T: Decoder](
     text: String): F[T] = {
     parse(text).liftTo[F].flatMap(_.as[T].liftTo[F])
   }

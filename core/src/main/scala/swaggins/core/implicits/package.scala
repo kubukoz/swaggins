@@ -1,3 +1,6 @@
 package swaggins.core
 
-package object implicits extends NonEmptyMapInstances with StringExtensions
+package object implicits
+    extends NonEmptyMapInstances
+    with StringExtensions
+    with InvariantExtensions

@@ -1,14 +1,17 @@
 package swaggins.openapi.model
 
-import io.circe.generic.JsonCodec
 import swaggins.openapi.model.components.Components
 import swaggins.openapi.model.paths.Paths
+import scalaz.deriving
+import io.circe.Decoder
 
-@JsonCodec(decodeOnly = true)
-case class OpenAPI(openapi: String,
-                   info: Info,
-                   paths: Paths,
-                   components: Components)
+@deriving(Decoder)
+case class OpenAPI(
+  openapi: String,
+  info: Info,
+  paths: Paths,
+  components: Components
+)
 
-@JsonCodec(decodeOnly = true)
+@deriving(Decoder)
 case class Info(version: String, title: String)

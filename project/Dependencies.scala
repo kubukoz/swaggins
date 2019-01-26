@@ -7,14 +7,17 @@ object Dependencies {
     .cross(CrossVersion.full)
   val kindProjector    = "org.spire-math" %% "kind-projector"     % Versions.kindProjector
   val betterMonadicFor = "com.olegpy"     %% "better-monadic-for" % Versions.bm4
+  val scalazDeriving   = "org.scalaz"     %% "deriving-plugin"    % Versions.scalazDeriving
 
   //libraries
-  val logback    = "ch.qos.logback"       % "logback-classic" % Versions.logback
-  val log4Cats   = "io.chrisdavenport"    %% "log4cats-slf4j" % Versions.log4Cats
-  val scalatest  = "org.scalatest"        %% "scalatest"      % Versions.scalatest % Test
-  val simulacrum = "com.github.mpilquist" %% "simulacrum"     % Versions.simulacrum
-  val decline    = "com.monovore"         %% "decline"        % Versions.decline
-  val chimney    = "io.scalaland"         %% "chimney"        % Versions.chimney
+  val scalazDerivingLib = "org.scalaz"           %% "deriving-macro" % Versions.scalazDeriving
+  val logback           = "ch.qos.logback"       % "logback-classic" % Versions.logback
+  val log4Cats          = "io.chrisdavenport"    %% "log4cats-slf4j" % Versions.log4Cats
+  val scalatest         = "org.scalatest"        %% "scalatest"      % Versions.scalatest % Test
+  val simulacrum        = "com.github.mpilquist" %% "simulacrum"     % Versions.simulacrum
+  val decline           = "com.monovore"         %% "decline"        % Versions.decline
+  val chimney           = "io.scalaland"         %% "chimney"        % Versions.chimney
+//  val smartypants       = "com.davegurnell"      %% "smartypants"    % Versions.smartypants
 
   val scalacheck = Seq(
     "com.fortysevendeg"          %% "scalacheck-datetime"       % Versions.scalacheckJava8 % Test,
@@ -44,6 +47,7 @@ object Dependencies {
     Seq(
       "org.typelevel"     %% "cats-core"    % Versions.cats,
       "io.chrisdavenport" %% "cats-par"     % Versions.catsParTemp,
+      "org.typelevel"     %% "kittens"      % Versions.kittens,
       "org.typelevel"     %% "cats-laws"    % Versions.cats % Test,
       "org.typelevel"     %% "cats-testkit" % Versions.cats % Test,
       "com.olegpy"        %% "meow-mtl"     % Versions.meowMtl
@@ -76,4 +80,7 @@ object Versions {
   val scalacheckJava8     = "0.2.0"
   val scalacheckShapeless = "1.1.8"
   val chimney             = "0.3.0"
+//  val smartypants         = "0.2.0"
+  val scalazDeriving      = "1.0.0"
+  val kittens             = "1.2.0"
 }

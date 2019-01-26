@@ -4,7 +4,7 @@ import cats.data.NonEmptyMap
 import io.circe.{Decoder, KeyDecoder}
 import io.circe.generic.extras.semiauto._
 import cats.implicits._
-import io.circe.generic.JsonCodec
+import scalaz.deriving
 import swaggins.config.model.shared.SourceIdentifier
 
 case class Code(value: NonEmptyMap[SourceIdentifier, SourceSpecs])
@@ -51,5 +51,5 @@ object GeneratorKey {
   implicit val order: Order[GeneratorKey] = Order.by(_.value)
 }
 
-@JsonCodec(decodeOnly = true)
+@deriving(Decoder)
 case class GeneratorConfig(path: String)

@@ -5,14 +5,28 @@ import cats.implicits._
 import cats.{Order, Show}
 import swaggins.core.implicits._
 import swaggins.scala.ast.ref.{OrdinaryType, TypeName, TypeReference}
+import monocle._
+import scalaz.deriving
 
 sealed trait ScalaModel extends Product with Serializable {
   def show: String
-  def setExtendsClause(extendsClause: ExtendsClause): ScalaModel
 }
 
 object ScalaModel {
   implicit val show: Show[ScalaModel] = _.show
+
+  val extendsClause: Lens[ScalaModel, ExtendsClause] =
+    Lens[ScalaModel, ExtendsClause] {
+      case CaseClass(_, _, clause, _)            => clause
+      case SealedTraitHierarchy(_, _, _, clause) => clause
+      case Enumerated(_, _, _, clause)           => clause
+    } { clause =>
+      {
+        case cc: CaseClass             => cc.copy(extendsClause = clause)
+        case adt: SealedTraitHierarchy => adt.copy(extendsClause = clause)
+        case enum: Enumerated          => enum.copy(extendsClause = clause)
+      }
+    }
 }
 
 case class CompanionObject(models: List[ScalaModel]) {
@@ -27,9 +41,6 @@ case class CaseClass(
   extendsClause: ExtendsClause,
   companionObject: Option[CompanionObject] = None
 ) extends ScalaModel {
-
-  override def setExtendsClause(extendsClause: ExtendsClause): ScalaModel =
-    copy(extendsClause = extendsClause)
 
   private val newlineAndCompanion =
     companionObject.foldMap(comp => "\n" + comp.show(name))
@@ -101,9 +112,6 @@ case class SealedTraitHierarchy(
   private val inhabitantsShow: String =
     inhabitants.map(_.show).mkString_("", "\n", "")
 
-  override def setExtendsClause(extendsClause: ExtendsClause): ScalaModel =
-    copy(extendsClause = extendsClause)
-
   override def show: String =
     show"""sealed trait $name$extendsClause
           |
@@ -117,6 +125,7 @@ case class Discriminator(
   mapping: Option[NonEmptyMap[String, OrdinaryType]]
 )
 
+@deriving(Order)
 sealed trait ScalaLiteral extends Product with Serializable {
 
   def asTypeName: TypeName = this match {
@@ -130,25 +139,25 @@ object ScalaLiteral {
 
   case class Double(value: scala.Double) extends ScalaLiteral
 
-  object String {
-    implicit val show: Show[String]   = _.value
-    implicit val order: Order[String] = Order.by(_.value)
+  //dumb constructor
+  def string(value: scala.Predef.String): ScalaLiteral = String(value)
+
+  implicit val show: Show[ScalaLiteral] = {
+    case String(value) => value
+    case Double(value) => value.toString + "d"
   }
 }
 
-case class Enumerated[Literal <: ScalaLiteral: Show](
+case class Enumerated(
   name: TypeName,
   underlyingType: TypeReference,
-  values: NonEmptySet[Literal],
+  values: NonEmptySet[ScalaLiteral],
   extendsClause: ExtendsClause = ExtendsClause.productWithSerializable
 ) extends ScalaModel {
 
   private val inhabitantsShow: String = values.map { str =>
     show"""case object ${str.asTypeName} extends $name("$str")"""
   }.mkString_("", "\n", "")
-
-  override def setExtendsClause(extendsClause: ExtendsClause): ScalaModel =
-    copy(extendsClause = extendsClause)
 
   override def show: String =
     show"""sealed abstract class $name(value: $underlyingType)$extendsClause

@@ -2,11 +2,11 @@ package swaggins.openapi.model.shared
 
 import cats.data.NonEmptyList
 import io.circe.Decoder
-import io.circe.generic.JsonCodec
 import swaggins.openapi.model.components.SchemaName
 import cats.implicits._
+import scalaz.deriving
 
-@JsonCodec(decodeOnly = true)
+@deriving(Decoder)
 case class Reference(`$ref`: ReferenceRef)
 
 object Reference {

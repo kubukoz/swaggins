@@ -119,7 +119,7 @@ object Converters {
                 StateT
                   .liftF(convertSchemaOrRef(derivedName, schemaOrRef))
                   .map(
-                    _.setExtendsClause(
+                    ScalaModel.extendsClause.set(
                       ExtendsClause(List(OrdinaryType(compositeName.value)))
                     )
                   )
@@ -185,7 +185,7 @@ object Converters {
           Enumerated(
             TypeName.parse(name.value),
             Primitive.String,
-            values.map(ScalaLiteral.String(_))
+            values.map(ScalaLiteral.string(_))
           )
         )
 

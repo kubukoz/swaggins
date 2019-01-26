@@ -3,12 +3,12 @@ package swaggins.openapi.model.components
 import cats.data.NonEmptyMap
 import cats.implicits._
 import cats.kernel.Order
-import io.circe.generic.JsonCodec
+import scalaz.deriving
 import io.circe.generic.extras.semiauto._
 import io.circe.{Decoder, KeyDecoder}
 import swaggins.openapi.model.shared.{Reference, Schema}
 
-@JsonCodec(decodeOnly = true)
+@deriving(Decoder)
 case class Components(schemas: NonEmptyMap[SchemaName, Reference.Able[Schema]])
 
 /**

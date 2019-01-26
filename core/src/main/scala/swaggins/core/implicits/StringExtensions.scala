@@ -43,7 +43,7 @@ class StringOps(private val s: String) extends AnyVal {
   }
 
   def indented(columns: Int): String = {
-    s.split("\n")
+    s.lines
       .map {
         case line if line.trim.nonEmpty => " " * columns + line
         case _                          => ""

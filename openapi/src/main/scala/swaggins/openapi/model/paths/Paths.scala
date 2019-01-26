@@ -4,12 +4,11 @@ import cats.data.{NonEmptyMap, NonEmptySet}
 import cats.implicits._
 import cats.kernel.Order
 import enumeratum._
-import io.circe.generic.JsonCodec
 import io.circe.generic.extras.semiauto._
 import io.circe.{Decoder, KeyDecoder}
 import swaggins.core.implicits._
 import swaggins.openapi.model.shared.{Reference, Schema}
-
+import scalaz.{deriving, xderiving}
 import scala.util.Try
 
 case class Paths(paths: NonEmptySet[Path])
@@ -26,7 +25,7 @@ object Paths {
 /**
   * $synthetic
   * */
-@JsonCodec(decodeOnly = true)
+@deriving(Decoder)
 case class Path(path: String, item: PathItem)
 
 object Path {
@@ -59,13 +58,14 @@ object HttpMethod extends Enum[HttpMethod] {
   implicit val order: Order[HttpMethod] = Order.by(indexOf)
 }
 
-@JsonCodec(decodeOnly = true)
+@deriving(Decoder)
 case class Operation(responses: Responses)
 
+@xderiving(Decoder)
 case class Responses(value: NonEmptyMap[StatusCode, Response]) extends AnyVal
 
 object Responses {
-  implicit val decoder: Decoder[Responses] = deriveUnwrappedDecoder
+//   //empty companion object to fix xderiving 
 }
 
 /**
@@ -80,7 +80,7 @@ object StatusCode {
   }
 }
 
-@JsonCodec(decodeOnly = true)
+@deriving(Decoder)
 case class Response(content: Option[Content])
 
 /**
@@ -93,5 +93,5 @@ object Content {
     Decoder[MediaType].prepare(_.downField("application/json")).map(apply)
 }
 
-@JsonCodec(decodeOnly = true)
+@deriving(Decoder)
 case class MediaType(schema: Option[Reference.Able[Schema]])

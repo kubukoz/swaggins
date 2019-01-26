@@ -12,10 +12,12 @@ val commonDeps = Seq(
   simulacrum,
   scalatest,
   decline,
-  chimney
+  chimney,
+  scalazDerivingLib
 ) ++ circe ++ monocle ++ scalacheck ++ pureconfig ++ fs2 ++ cats
 
 val plugins = List(
+  addCompilerPlugin(scalazDeriving),
   addCompilerPlugin(macroParadise),
   addCompilerPlugin(kindProjector),
   addCompilerPlugin(betterMonadicFor)
