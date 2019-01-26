@@ -1,6 +1,6 @@
 package swaggins.generator.convert
 
-import cats.{Applicative, Monad}
+import cats.{~>, Applicative, Monad}
 import cats.data._
 import cats.implicits._
 import cats.mtl.{ApplicativeAsk, ApplicativeLocal}
@@ -11,16 +11,23 @@ import swaggins.openapi.model.shared._
 import swaggins.scala.ast.model
 import swaggins.scala.ast.model.{Discriminator => _, _}
 import swaggins.scala.ast.ref._
+
 case class PackageName(value: String) extends AnyVal
-case class Packages(value: List[PackageName])
+case class Packages(value: List[PackageName]) {
+  def added(pkg: PackageName): Packages = copy(pkg :: value)
+}
 
 object Packages {
   type Ask[F[_]] = ApplicativeAsk[F, Packages]
   def Ask[F[_]](implicit F: Ask[F]): Ask[F] = F
+
   type Local[F[_]] = ApplicativeLocal[F, Packages]
   def Local[F[_]](implicit F: Local[F]): Local[F] = F
 
   val empty: Packages = Packages(Nil)
+
+  def added[F[_]: Local, A](name: PackageName): F ~> F =
+    λ[F ~> F](Local[F].local(_.added(name))(_))
 }
 
 trait Converters[F[_]] {
