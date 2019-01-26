@@ -4,16 +4,14 @@ import java.nio.file.{Path, Paths}
 
 import cats.effect.{ContextShift, IO, Timer}
 import cats.implicits._
-import org.scalatest.{Assertion, AsyncWordSpec, Matchers}
+import org.scalatest.{Assertion, Matchers, WordSpec}
 import swaggins.core.{ExecutionContexts, FileReader}
 
-import scala.concurrent.Future
+import scala.concurrent.ExecutionContext
 
-trait BaseTest extends AsyncWordSpec with Matchers {
-  implicit val cs: ContextShift[IO] = IO.contextShift(executionContext)
-  implicit val timer: Timer[IO]     = IO.timer(executionContext)
-
-  type With[F[_[_]], G[_]] = (F[G] => G[Assertion]) => G[Assertion]
+trait BaseTest extends WordSpec with Matchers {
+  implicit val cs: ContextShift[IO] = IO.contextShift(ExecutionContext.global)
+  implicit val timer: Timer[IO]     = IO.timer(ExecutionContext.global)
 
   def filePath(name: String): Path = {
     Paths.get(getClass.getResource(name).toURI)
@@ -24,7 +22,7 @@ trait BaseTest extends AsyncWordSpec with Matchers {
       _.readFile(filePath(name))
     }
 
-  val runIO: IO[Assertion] => Future[Assertion] = _.unsafeToFuture()
+  val runIO: IO[Assertion] => Assertion = _.unsafeRunSync()
 
   val executionContextResource = ExecutionContexts.unboundedCached[IO]
 }

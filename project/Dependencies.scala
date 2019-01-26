@@ -3,6 +3,8 @@ import sbt._
 object Dependencies {
 
   //plugins
+  val splain = "io.tryp" % "splain" % Versions.splain cross CrossVersion.patch
+
   val macroParadise = ("org.scalamacros" % "paradise" % Versions.macroParadise)
     .cross(CrossVersion.full)
   val kindProjector    = "org.spire-math" %% "kind-projector"     % Versions.kindProjector
@@ -17,7 +19,6 @@ object Dependencies {
   val simulacrum        = "com.github.mpilquist" %% "simulacrum"     % Versions.simulacrum
   val decline           = "com.monovore"         %% "decline"        % Versions.decline
   val chimney           = "io.scalaland"         %% "chimney"        % Versions.chimney
-//  val smartypants       = "com.davegurnell"      %% "smartypants"    % Versions.smartypants
 
   val scalacheck = Seq(
     "com.fortysevendeg"          %% "scalacheck-datetime"       % Versions.scalacheckJava8 % Test,
@@ -61,6 +62,7 @@ object Dependencies {
 }
 
 object Versions {
+  val splain              = "0.3.5"
   val log4Cats            = "0.2.0"
   val bm4                 = "0.3.0-M4"
   val cats                = "1.5.0"
@@ -80,7 +82,6 @@ object Versions {
   val scalacheckJava8     = "0.2.0"
   val scalacheckShapeless = "1.1.8"
   val chimney             = "0.3.0"
-//  val smartypants         = "0.2.0"
   val scalazDeriving      = "1.0.0"
   val kittens             = "1.2.0"
 }

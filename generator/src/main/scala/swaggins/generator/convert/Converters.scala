@@ -45,6 +45,7 @@ object Converters {
     case ComponentRef(name) => name.transformInto[OrdinaryType]
   }
 
+  //todo un-implicify
   implicit def make[F[_]: Packages.Ask: Monad]: Converters[F] =
     new Converters[F] {
 
@@ -72,8 +73,7 @@ object Converters {
             val fields = fieldsWithModels.map(_._1)
             val models = fieldsWithModels.toList.flatMap(_._2)
 
-            val companion =
-              if (models.isEmpty) None else Some(CompanionObject(models))
+            val companion = models.toNel.map(CompanionObject(typeName, _))
 
             CaseClass(typeName, fields, ExtendsClause.empty, companion)
               .pure[F]

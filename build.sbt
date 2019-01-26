@@ -17,19 +17,20 @@ val commonDeps = Seq(
 ) ++ circe ++ monocle ++ scalacheck ++ pureconfig ++ fs2 ++ cats
 
 val plugins = List(
-  addCompilerPlugin(scalazDeriving),
-  addCompilerPlugin(macroParadise),
-  addCompilerPlugin(kindProjector),
-  addCompilerPlugin(betterMonadicFor)
+  splain,
+  scalazDeriving,
+  macroParadise,
+  kindProjector,
+  betterMonadicFor
 )
 
 val commonSettings = Seq(
   organization := "com.kubukoz",
   scalaVersion := "2.12.8",
   version := "0.0.1",
-  libraryDependencies ++= commonDeps,
+  libraryDependencies ++= (commonDeps ++ plugins.map(compilerPlugin)),
   (Test / fork) := true
-) ++ plugins
+)
 
 def makeDep(project: Project): ClasspathDependency =
   project % "compile->compile;test->test"
