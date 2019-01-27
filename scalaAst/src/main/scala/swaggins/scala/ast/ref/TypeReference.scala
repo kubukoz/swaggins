@@ -17,21 +17,9 @@ sealed trait TypeReference extends Product with Serializable {
 object TypeReference {
 
   def byName[F[_]: Packages.Ask](base: TypeName): F[TypeReference] = {
-    //todo move this outta here
-    val parentPackageNodeOpt = base match {
-      case Parsed(_)            => None
-      case Anonymous(_, parent) => Some(parent)
-    }
-
-    def getPackage(pkg: Packages): Packages = parentPackageNodeOpt match {
-      case None    => pkg
-      case Some(p) => pkg.append(PackageName(p.show))
-    }
-
     Packages
       .Ask[F]
-      .reader(pkg =>
-        QualifiedReference(getPackage(pkg), OrdinaryType(base.show)))
+      .reader(pkg => QualifiedReference(pkg, OrdinaryType(base.show)))
   }
 
   implicit val show: Show[TypeReference] = _.show
