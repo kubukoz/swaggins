@@ -66,5 +66,10 @@ components:
     york:
       type: object
       properties:
-        woof:
-          type: string
+        doggo:
+          type: object
+          required:
+            - dog
+          properties:
+            dog:
+              $ref: '#/components/schemas/dog'

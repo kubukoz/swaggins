@@ -196,7 +196,17 @@ object OpenApiParserTest {
                      Property(PropertyName("woof"),
                               RefOrSchema.InlineSchema(StringSchema(None)))))
 
-    val yorkSchema = huskySchema
+    val yorkSchema = ObjectSchema(
+      None,
+      NonEmptyList.of(
+        Property(
+          SchemaName("doggo"),
+          RefOrSchema.InlineSchema(
+            ObjectSchema(Some(NonEmptySet.of(SchemaName("dog"))),
+                         NonEmptyList.of(
+                           Property(SchemaName("dog"), componentRef("dog")))))
+        ))
+    )
 
     val components = Components(
       NonEmptyMap.of(

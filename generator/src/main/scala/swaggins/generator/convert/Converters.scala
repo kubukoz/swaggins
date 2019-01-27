@@ -91,6 +91,8 @@ object Converters {
     }
   }
 
+  //todo test case: what if there is an anonymous composite type
+  //(probably changes in typename#totypereference are needed
   def convertCompositeSchema[F[_]: Packages.Local: Monad](
     compositeName: TypeName,
     compositeSchema: CompositeSchema
@@ -224,6 +226,15 @@ object Converters {
           case (childType, childModel) =>
             (TypeReference.listOf(childType), childModel)
         }
+      case RefOrSchema.InlineSchema(o: ObjectSchema) =>
+        val typeName = TypeName.parse(name.value)
+
+        val genReference = Packages
+          .Local[F]
+          .local(_.concat(targetClass.toPackages))(
+            TypeReference.byName(typeName))
+
+        (genReference, convertObjectSchema[F](typeName, o).map(_.some)).tupled
     }
   }
 }

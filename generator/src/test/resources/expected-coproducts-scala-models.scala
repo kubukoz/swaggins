@@ -41,4 +41,7 @@ object Strnum {
   final case class Double(value: _root_.scala.Double) extends models.Strnum
 }
 
-final case class York(woof: _root_.scala.Option[_root_.scala.Predef.String])
+final case class York(doggo: _root_.scala.Option[models.York.Doggo])
+object York {
+  final case class Doggo(dog: models.Dog)
+}

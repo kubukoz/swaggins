@@ -17,9 +17,7 @@ sealed trait TypeReference extends Product with Serializable {
 object TypeReference {
 
   def byName[F[_]: Packages.Ask](base: TypeName): F[TypeReference] = {
-    Packages
-      .Ask[F]
-      .reader(QualifiedReference(_, OrdinaryType(base.show)))
+    Packages.Ask[F].reader(QualifiedReference(_, base.toTypeReference))
   }
 
   implicit val show: Show[TypeReference] = _.show
@@ -87,6 +85,17 @@ sealed trait TypeName extends Product with Serializable {
 
     go(this, Packages.empty)
   }
+
+  final def toTypeReference: TypeReference = this match {
+    case Parsed(value)        => OrdinaryType(value)
+    case Anonymous(number, _) => OrdinaryType(show"Anonymous$$$number")
+    //todo uncomment in case of bug!
+    //todo rewrite  as recursion
+    //todo recursion schemes?
+//    case Anonymous(number, scope) =>
+//      QualifiedReference(scope.toPackages,
+//                         OrdinaryType(show"Anonymous$$$number"))
+  }
 }
 
 final case class Parsed(value: String)                   extends TypeName
@@ -94,7 +103,8 @@ final case class Anonymous(number: Int, scope: TypeName) extends TypeName
 
 object TypeName {
   implicit val show: Show[TypeName] = {
-    case Parsed(value)        => value
+    case Parsed(value) => value
+    //scope ignored on purpose: when defining the type an unqualified name needed
     case Anonymous(number, _) => show"Anonymous$$$number"
   }
   //todo rename to "decode" or "fromSchema"
