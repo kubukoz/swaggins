@@ -1,13 +1,14 @@
 package swaggins.generator
 
-import cats.data.ReaderT
+import cats.data.{Chain, ReaderT}
 import cats.effect.IO
 import cats.implicits._
 import org.scalatest.Assertion
 import swaggins.BaseTest
 import swaggins.openapi.model.OpenApiParserTest
 import cats.mtl.implicits._
-import swaggins.scala.ast.packages.Packages
+import swaggins.generator.convert.Converters
+import swaggins.scala.ast.packages.{PackageName, Packages}
 
 class ScalaModelGeneratorTest extends BaseTest {
   type F[A] = ReaderT[IO, Packages, A]
@@ -31,17 +32,19 @@ class ScalaModelGeneratorTest extends BaseTest {
         (actual, expected).mapN(compare).flatten
       }
     }
-*/
+     */
     "the coproducts file is given" should {
       "generate valid code" in runIO {
-        val generator: Generator[F] = new ScalaCaseClassGenerator[F]
+        implicit val converters: Converters[F] = Converters.make
+
+        val generator: Generator[F]            = new ScalaCaseClassGenerator[F]
 
         val actual =
           generator
             .generate(OpenApiParserTest.expected.coproducts)
             .compile
             .toList
-            .run(Packages.empty)
+            .run(Packages(Chain.one(PackageName("models"))))
 
         val expected = fileContent("/expected-coproducts-scala-models.scala")
           .map(GeneratedFile("models.scala", _))
@@ -54,6 +57,7 @@ class ScalaModelGeneratorTest extends BaseTest {
 
   def compare(actual: List[GeneratedFile],
               expected: List[GeneratedFile]): IO[Assertion] = {
+    println(actual.head.content)
     val actualByName: Map[String, GeneratedFile] =
       actual.groupByNel(_.name).mapValues(_.head)
 

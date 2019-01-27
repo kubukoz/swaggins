@@ -1,44 +1,44 @@
 package models
 
-final case class Cat(huntingSkill: Option[Cat.HuntingSkill])
+final case class Cat(huntingSkill: _root_.scala.Option[models.Cat.HuntingSkill])
 object Cat {
-  sealed abstract class HuntingSkill(value: String) extends Product with Serializable
+  sealed abstract class HuntingSkill(value: _root_.scala.Predef.String) extends _root_.scala.Product with _root_.scala.Serializable
   object HuntingSkill {
-    case object Adventurous extends HuntingSkill("adventurous")
-    case object Aggressive extends HuntingSkill("aggressive")
-    case object Clueless extends HuntingSkill("clueless")
-    case object Lazy extends HuntingSkill("lazy")
+    case object Adventurous extends models.Cat.HuntingSkill("adventurous")
+    case object Aggressive extends models.Cat.HuntingSkill("aggressive")
+    case object Clueless extends models.Cat.HuntingSkill("clueless")
+    case object Lazy extends models.Cat.HuntingSkill("lazy")
   }
 }
 
-sealed trait Dog extends Product with Serializable
+sealed trait Dog extends _root_.scala.Product with _root_.scala.Serializable
 object Dog {
-  final case class Husky(value: Husky) extends Dog
-  final case class York(value: York) extends Dog
-  final case class Anonymous$1(name: String, age: Double, gender: Option[Anonymous$1.Gender]) extends Dog
+  final case class Husky(value: models.Dog.Husky) extends models.Dog
+  final case class York(value: models.Dog.York) extends models.Dog
+  final case class Anonymous$1(name: _root_.scala.Predef.String, age: _root_.scala.Double, gender: _root_.scala.Option[models.Dog.Anonymous$1.Gender]) extends models.Dog
   object Anonymous$1 {
-    sealed abstract class Gender(value: String) extends Product with Serializable
+    sealed abstract class Gender(value: _root_.scala.Predef.String) extends _root_.scala.Product with _root_.scala.Serializable
     object Gender {
-      case object Female extends Gender("female")
-      case object Male extends Gender("male")
+      case object Female extends models.Dog.Anonymous$1.Gender("female")
+      case object Male extends models.Dog.Anonymous$1.Gender("male")
     }
   }
 }
 
-final case class Dog2(value: Dog)
+final case class Dog2(value: models.Dog)
 
-final case class Husky(woof: Option[String])
+final case class Husky(woof: _root_.scala.Option[_root_.scala.Predef.String])
 
-sealed trait Pet extends Product with Serializable
+sealed trait Pet extends _root_.scala.Product with _root_.scala.Serializable
 object Pet {
-  final case class Cat(value: Cat) extends Pet
-  final case class Dog(value: Dog) extends Pet
+  final case class Cat(value: models.Pet.Cat) extends models.Pet
+  final case class Dog(value: models.Pet.Dog) extends models.Pet
 }
 
-sealed trait Strnum extends Product with Serializable
+sealed trait Strnum extends _root_.scala.Product with _root_.scala.Serializable
 object Strnum {
-  final case class String(value: String) extends Strnum
-  final case class Double(value: Double) extends Strnum
+  final case class String(value: _root_.scala.Predef.String) extends models.Strnum
+  final case class Double(value: _root_.scala.Double) extends models.Strnum
 }
 
-final case class York(woof: Option[String])
+final case class York(woof: _root_.scala.Option[_root_.scala.Predef.String])

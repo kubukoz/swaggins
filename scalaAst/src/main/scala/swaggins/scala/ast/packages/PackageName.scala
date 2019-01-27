@@ -11,11 +11,11 @@ import swaggins.core.implicits._
 final case class PackageName(value: String) extends AnyVal
 
 final case class Packages(value: Chain[PackageName]) {
-  def added(pkg: PackageName): Packages = copy(value append pkg)
+  def append(pkg: PackageName): Packages = copy(value append pkg)
 }
 
 object Packages {
-  implicit val show: Show[Packages] = _.value.reverse.mkString_("", ".", "")
+  implicit val show: Show[Packages] = _.value.mkString_("", ".", "")
 
   type Ask[F[_]] = ApplicativeAsk[F, Packages]
   def Ask[F[_]](implicit F: Ask[F]): Ask[F] = F
