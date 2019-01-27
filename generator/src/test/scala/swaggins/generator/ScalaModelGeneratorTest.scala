@@ -14,9 +14,10 @@ class ScalaModelGeneratorTest extends BaseTest {
   type F[A] = ReaderT[IO, Packages, A]
 
   "generator" when {
-    /*"the sample file is given" should {
+    "the sample file is given" should {
       "generate valid code" in runIO {
-        val generator: Generator[F] = new ScalaCaseClassGenerator[F]
+        implicit val converters: Converters[F] = Converters.make
+        val generator: Generator[F]            = new ScalaCaseClassGenerator[F]
 
         val actual =
           generator
@@ -32,12 +33,12 @@ class ScalaModelGeneratorTest extends BaseTest {
         (actual, expected).mapN(compare).flatten
       }
     }
-     */
+
     "the coproducts file is given" should {
       "generate valid code" in runIO {
         implicit val converters: Converters[F] = Converters.make
 
-        val generator: Generator[F]            = new ScalaCaseClassGenerator[F]
+        val generator: Generator[F] = new ScalaCaseClassGenerator[F]
 
         val actual =
           generator
