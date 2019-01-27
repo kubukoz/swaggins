@@ -15,10 +15,7 @@ sealed trait TypeReference extends Product with Serializable {
 object TypeReference {
 
   def byName[F[_]: Packages.Ask](base: TypeName): F[TypeReference] =
-    Packages.Ask[F].reader { pkg =>
-      //todo create new leaf type for this?
-      OrdinaryType.apply(show"$pkg.$base")
-    }
+    Packages.Ask[F].reader(QualifiedReference(_, OrdinaryType(base.value)))
 
   implicit val show: Show[TypeReference] = _.show
 
@@ -28,7 +25,7 @@ object TypeReference {
   def optional(elementType: TypeReference): TypeReference =
     AppliedType(scalaOption, List(elementType), Nil)
 
-  val scalaList: TypeReference   = OrdinaryType.apply("_root_.scala.Predef.List")
+  val scalaList: TypeReference   = OrdinaryType.apply("_root_.scala.List")
   val scalaOption: TypeReference = OrdinaryType.apply("_root_.scala.Option")
   val product: TypeReference     = OrdinaryType.apply("_root_.scala.Product")
 
@@ -65,6 +62,11 @@ final case class AppliedType(applied: TypeReference,
     if (params.nonEmpty) params.mkString_("(", ", ", ")") else ""
 
   override def show: String = show"$applied$typeParamListString$paramListString"
+}
+
+case class QualifiedReference(pkg: Packages, ref: TypeReference)
+    extends TypeReference {
+  override def show: String = if (pkg.isEmpty) ref.show else show"$pkg.$ref"
 }
 
 @deriving(Order)

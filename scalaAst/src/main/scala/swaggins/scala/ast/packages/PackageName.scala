@@ -3,15 +3,19 @@ package swaggins.scala.ast.packages
 import cats.Show
 import cats.data.Chain
 import cats.implicits._
+import cats.kernel.Order
 import cats.mtl.{ApplicativeAsk, ApplicativeLocal}
-import scalaz.xderiving
+import scalaz.{deriving, xderiving}
 import swaggins.core.implicits._
 
 @xderiving(Show)
+@deriving(Order)
 final case class PackageName(value: String) extends AnyVal
 
+@deriving(Order)
 final case class Packages(value: Chain[PackageName]) {
   def append(pkg: PackageName): Packages = copy(value append pkg)
+  def isEmpty: Boolean = value.isEmpty
 }
 
 object Packages {

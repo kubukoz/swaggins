@@ -79,14 +79,12 @@ object Converters {
 
       case NumberSchema(None) =>
         ModelWithCompanion
-          .justClass(
-            ScalaModel.valueClass(typeName, TypeReference.double))
+          .justClass(ScalaModel.valueClass(typeName, TypeReference.double))
           .pure[F]
 
       case StringSchema(None) =>
         ModelWithCompanion
-          .justClass(
-            ScalaModel.valueClass(typeName, TypeReference.string))
+          .justClass(ScalaModel.valueClass(typeName, TypeReference.string))
           .pure[F]
 
       case comp: CompositeSchema =>
@@ -152,39 +150,37 @@ object Converters {
     * */
   def convertObjectSchema[F[_]: Packages.Local: Applicative](
     typeName: TypeName,
-    schema: ObjectSchema): F[ModelWithCompanion] =
-    Packages.Local.local(_.append(PackageName(typeName.value))) {
+    schema: ObjectSchema): F[ModelWithCompanion] = {
 
-      schema.properties.nonEmptyTraverse { prop =>
-        val isRequired = schema.required.exists(_.apply(prop.name))
-        propertyToFieldWithModel(isRequired, prop)
+    schema.properties.nonEmptyTraverse { prop =>
+      val isRequired = schema.required.exists(_.apply(prop.name))
+      propertyToFieldWithModel(typeName, isRequired, prop)
 
-      }.map { fieldsWithModels =>
-        val fields: NonEmptyList[ClassField] = fieldsWithModels.map(_._1)
+    }.map { fieldsWithModels =>
+      val fields: NonEmptyList[ClassField] = fieldsWithModels.map(_._1)
 
-        val models: Option[NonEmptyList[ModelWithCompanion]] =
-          fieldsWithModels.toList.mapFilter(_._2).toNel
+      val models: Option[NonEmptyList[ModelWithCompanion]] =
+        fieldsWithModels.toList.mapFilter(_._2).toNel
 
-        val companion: Option[ScalaModel] = models.map(
-          models =>
-            ScalaModel.companionObject(
-              typeName,
-              Body.models(models.flatMap(_.asNel).toList)))
+      val companion: Option[ScalaModel] = models.map(models =>
+        ScalaModel.companionObject(typeName,
+                                   Body.models(models.flatMap(_.asNel).toList)))
 
-        ModelWithCompanion(
-          ScalaModel.finalCaseClass(typeName, fields, ExtendsClause.empty),
-          companion)
-      }
+      ModelWithCompanion(
+        ScalaModel.finalCaseClass(typeName, fields, ExtendsClause.empty),
+        companion)
     }
+  }
 
   /**
     * Generates a class field and, if the type is anonymous, its definition.
     * */
-  def propertyToFieldWithModel[F[_]: Packages.Ask: Applicative](
+  def propertyToFieldWithModel[F[_]: Packages.Local: Applicative](
+    targetClass: TypeName,
     isRequired: Boolean,
     prop: Property): F[(ClassField, Option[ModelWithCompanion])] = {
 
-    refSchemaToType(prop.name, prop.schema).map {
+    refSchemaToType(targetClass, prop.name, prop.schema).map {
       case (tpe, modelOpt) =>
         val checkedType =
           if (isRequired) tpe else TypeReference.optional(tpe)
@@ -200,9 +196,10 @@ object Converters {
     * Resolves a schema name and schema/reference to a type reference
     * (to be used as a class field) and (possibly) a synthetic type.
     * If a synthetic type is created, its name is based on the property's name,
-    * and the reference is qualified with the current package scope.
+    * and the reference is qualified with the target class's package scope.
     * */
-  def refSchemaToType[F[_]: Packages.Ask: Applicative](
+  def refSchemaToType[F[_]: Packages.Local: Applicative](
+    targetClass: TypeName,
     name: SchemaName,
     schema: RefOrSchema
   ): F[(TypeReference, Option[ModelWithCompanion])] = {
@@ -220,13 +217,15 @@ object Converters {
             values.map(ScalaLiteral.string(_))
           )
 
-        (
-          TypeReference.byName(TypeName.parse(name.value)),
-          enumModel.map(_.some)
-        ).tupled
+        Packages.Local[F].local(_.append(PackageName(targetClass.value))) {
+          (
+            TypeReference.byName(TypeName.parse(name.value)),
+            enumModel.map(_.some)
+          ).tupled
+        }
 
       case RefOrSchema.InlineSchema(ArraySchema(items)) =>
-        refSchemaToType(name, items).map {
+        refSchemaToType(targetClass, name, items).map {
           case (childType, childModel) =>
             (TypeReference.listOf(childType), childModel)
         }

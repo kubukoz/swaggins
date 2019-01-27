@@ -24,7 +24,7 @@ class ScalaModelGeneratorTest extends BaseTest {
             .generate(OpenApiParserTest.expected.full)
             .compile
             .toList
-            .run(Packages.empty)
+            .run(Packages(Chain.one(PackageName("models"))))
 
         val expected = fileContent("/expected-scala-models.scala")
           .map(GeneratedFile("models.scala", _))
