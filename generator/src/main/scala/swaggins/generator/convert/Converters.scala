@@ -10,7 +10,7 @@ import swaggins.scala.ast.model._
 import swaggins.scala.ast.model.body.Body
 import swaggins.scala.ast.model.klass.{ClassField, FieldName}
 import swaggins.scala.ast.model.values.ScalaLiteral
-import swaggins.scala.ast.packages.{PackageName, Packages}
+import swaggins.scala.ast.packages.Packages
 import swaggins.scala.ast.ref._
 
 trait Converters[F[_]] {

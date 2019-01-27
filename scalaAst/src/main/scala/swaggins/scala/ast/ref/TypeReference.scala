@@ -7,6 +7,8 @@ import swaggins.core.implicits._
 import swaggins.scala.ast.model.values.ScalaLiteral
 import swaggins.scala.ast.packages.{PackageName, Packages}
 
+import scala.annotation.tailrec
+
 @deriving(Order)
 sealed trait TypeReference extends Product with Serializable {
   def show: String
@@ -87,15 +89,20 @@ case class QualifiedReference(pkg: Packages, ref: TypeReference)
 @deriving(Order)
 sealed trait TypeName extends Product with Serializable {
 
-  final def toPackages: Packages = this match {
-    case Parsed(value) => Packages.one(PackageName(value))
-    case Anonymous(number, parent) =>
-      parent.toPackages.append(PackageName(show"Anonymous$$$number"))
+  final def toPackages: Packages = {
+    @tailrec
+    def go(elem: TypeName, mem: Packages): Packages = elem match {
+      case Parsed(value) => Packages.one(PackageName(value)).concat(mem)
+      case Anonymous(number, scope) =>
+        go(scope, mem.append(PackageName(show"Anonymous$$$number")))
+    }
+
+    go(this, Packages.empty)
   }
 }
 
-final case class Parsed(value: String)                    extends TypeName
-final case class Anonymous(number: Int, parent: TypeName) extends TypeName
+final case class Parsed(value: String)                   extends TypeName
+final case class Anonymous(number: Int, scope: TypeName) extends TypeName
 
 object TypeName {
   implicit val show: Show[TypeName] = {
@@ -106,8 +113,8 @@ object TypeName {
   def parse(value: String): TypeName = Parsed(value.toCamelCase)
   def raw(value: String): TypeName   = Parsed(value)
 
-  def anonymous(number: Int, parent: TypeName): TypeName =
-    Anonymous(number, parent)
+  def anonymous(number: Int, scope: TypeName): TypeName =
+    Anonymous(number, scope)
 }
 
 object PrimitiveNames {
