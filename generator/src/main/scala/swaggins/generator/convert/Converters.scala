@@ -86,6 +86,11 @@ object Converters {
           .justClass(ScalaModel.valueClass(typeName, TypeReference.string))
           .pure[F]
 
+      case StringSchema(Some(values)) =>
+        ScalaModel.enumeration[F](typeName,
+                                  TypeReference.string,
+                                  values.map(ScalaLiteral.string(_)))
+
       case comp: CompositeSchema =>
         convertCompositeSchema[F](typeName, comp)
     }
@@ -179,6 +184,7 @@ object Converters {
 
     refSchemaToType(targetClass, prop.name, prop.schema).map {
       case (tpe, modelOpt) =>
+        println(s"Generated field of type: $tpe")
         val checkedType =
           if (isRequired) tpe else TypeReference.optional(tpe)
 

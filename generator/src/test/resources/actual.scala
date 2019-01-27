@@ -31,20 +31,20 @@ sealed trait Doggie extends _root_.scala.Product with _root_.scala.Serializable
 object Doggie {
   final case class Anonymous$1(name: _root_.scala.Option[_root_.scala.Predef.String], age: _root_.scala.Option[models.Doggie.Anonymous$1.Age]) extends models.Doggie
   object Anonymous$1 {
-    final case class Age(age: _root_.scala.Option[_root_.scala.Double], wellness: _root_.scala.Option[models.Doggie.Anonymous$1.Age.Wellness])
+    final case class Age(age: _root_.scala.Option[_root_.scala.Double], wellness: _root_.scala.Option[models.Age.Wellness])
     object Age {
       sealed abstract class Wellness(value: _root_.scala.Predef.String) extends _root_.scala.Product with _root_.scala.Serializable
       object Wellness {
-        case object Bad extends models.Doggie.Anonymous$1.Age.Wellness("bar")
-        case object Good extends models.Doggie.Anonymous$1.Age.Wellness("foo")
+        case object Bad extends models.Age.Wellness("bad")
+        case object Good extends models.Age.Wellness("good")
       }
     }
   }
   sealed abstract class Anonymous$2(value: _root_.scala.Predef.String) extends models.Doggie
   object Anonymous$2 {
-    case object Bar extends models.Doggie.Anonymous$2("bar")
-    case object Baz extends models.Doggie.Anonymous$2("baz")
-    case object Foo extends models.Doggie.Anonymous$2("foo")
+    case object Bar extends models.Anonymous$2("bar")
+    case object Baz extends models.Anonymous$2("baz")
+    case object Foo extends models.Anonymous$2("foo")
   }
   final case class York(value: models.York) extends models.Doggie
 }

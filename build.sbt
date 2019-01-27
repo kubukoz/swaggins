@@ -28,8 +28,7 @@ val commonSettings = Seq(
   organization := "com.kubukoz",
   scalaVersion := "2.12.8",
   version := "0.0.1",
-  libraryDependencies ++= (commonDeps ++ plugins.map(compilerPlugin)),
-  (Test / fork) := true
+  libraryDependencies ++= (commonDeps ++ plugins.map(compilerPlugin))
 )
 
 def makeDep(project: Project): ClasspathDependency =

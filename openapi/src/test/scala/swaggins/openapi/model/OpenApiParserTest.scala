@@ -208,6 +208,38 @@ object OpenApiParserTest {
         ))
     )
 
+    val doggieSchema = CompositeSchema(
+      NonEmptyList.of(
+        RefOrSchema.InlineSchema(
+          ObjectSchema(
+            None,
+            NonEmptyList.of(
+              Property(SchemaName("name"),
+                       RefOrSchema.InlineSchema(StringSchema(None))),
+              Property(
+                SchemaName("age"),
+                RefOrSchema.InlineSchema(ObjectSchema(
+                  None,
+                  NonEmptyList.of(
+                    Property(SchemaName("age"),
+                             RefOrSchema.InlineSchema(NumberSchema(None))),
+                    Property(SchemaName("wellness"),
+                             RefOrSchema.InlineSchema(StringSchema(
+                               Some(NonEmptySet.of("good", "bad")))))
+                  )
+                ))
+              )
+            )
+          )),
+        RefOrSchema.InlineSchema(
+          StringSchema(Some(NonEmptySet.of("foo", "bar", "baz")))
+        ),
+        componentRef("york")
+      ),
+      CompositeSchemaKind.OneOf,
+      None
+    )
+
     val components = Components(
       NonEmptyMap.of(
         SchemaName("strnum") -> RefOrSchema.InlineSchema(strNumSchema),
@@ -216,7 +248,8 @@ object OpenApiParserTest {
         SchemaName("dog2")   -> componentRef("dog"),
         SchemaName("dog")    -> RefOrSchema.InlineSchema(dogSchema),
         SchemaName("husky")  -> RefOrSchema.InlineSchema(huskySchema),
-        SchemaName("york")   -> RefOrSchema.InlineSchema(yorkSchema)
+        SchemaName("york")   -> RefOrSchema.InlineSchema(yorkSchema),
+        SchemaName("doggie") -> RefOrSchema.InlineSchema(doggieSchema)
       ))
   }
 }

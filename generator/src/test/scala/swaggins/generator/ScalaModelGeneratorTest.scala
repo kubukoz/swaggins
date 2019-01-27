@@ -58,6 +58,7 @@ class ScalaModelGeneratorTest extends BaseTest {
 
   def compare(actual: List[GeneratedFile],
               expected: List[GeneratedFile]): IO[Assertion] = {
+    println(actual.head.content)
     val actualByName: Map[String, GeneratedFile] =
       actual.groupByNel(_.name).mapValues(_.head)
 
