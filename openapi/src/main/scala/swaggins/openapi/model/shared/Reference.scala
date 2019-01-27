@@ -4,17 +4,22 @@ import cats.data.NonEmptyList
 import io.circe.Decoder
 import swaggins.openapi.model.components.SchemaName
 import cats.implicits._
-import scalaz.deriving
+import io.circe.generic.semiauto._
 
-@deriving(Decoder)
-final case class Reference(`$ref`: ReferenceRef)
+sealed trait RefOrSchema extends Product with Serializable
 
-object Reference {
-  //a reference-able type.
-  type Able[T] = Either[Reference, T]
+object RefOrSchema {
+  final case class Reference(`$ref`: ReferenceRef) extends RefOrSchema
+  final case class InlineSchema(schema: Schema)    extends RefOrSchema
 
-  implicit def decoder[T: Decoder]: Decoder[Able[T]] =
-    Decoder[Reference].either(Decoder[T])
+  implicit val decoder: Decoder[RefOrSchema] =
+    NonEmptyList
+      .of(
+        deriveDecoder[Reference],
+        Decoder[Schema].map(InlineSchema)
+      )
+      .map(_.widen[RefOrSchema])
+      .reduceK
 
 }
 

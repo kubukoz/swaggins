@@ -7,7 +7,6 @@ import enumeratum._
 import io.circe._
 import swaggins.core.implicits._
 import swaggins.openapi.model.components.SchemaName
-import swaggins.openapi.model.shared.Reference.Able
 import scalaz.deriving
 import scala.collection.immutable
 
@@ -31,9 +30,9 @@ object Schema {
   }
 }
 
-final case class CompositeSchema(schemas: NonEmptyList[Reference.Able[Schema]],
-                           kind: CompositeSchemaKind,
-                           discriminator: Option[Discriminator])
+final case class CompositeSchema(schemas: NonEmptyList[RefOrSchema],
+                                 kind: CompositeSchemaKind,
+                                 discriminator: Option[Discriminator])
     extends Schema
 
 object CompositeSchema {
@@ -58,8 +57,8 @@ object CompositeSchema {
       CompositeSchemaKind.namesToValuesMap
 
     def schemasDecoder(
-      kind: CompositeSchemaKind): Decoder[NonEmptyList[Able[Schema]]] =
-      Decoder[NonEmptyList[Able[Schema]]].prepare(_.downField(kind.entryName))
+      kind: CompositeSchemaKind): Decoder[NonEmptyList[RefOrSchema]] =
+      Decoder[NonEmptyList[RefOrSchema]].prepare(_.downField(kind.entryName))
 
     def findKind(obj: JsonObject): Either[String, CompositeSchemaKind] = {
       import util._
@@ -87,7 +86,7 @@ object CompositeSchema {
 
 @deriving(Decoder)
 final case class Discriminator(propertyName: Option[SchemaName],
-                         mapping: Option[NonEmptyMap[String, SchemaName]])
+                               mapping: Option[NonEmptyMap[String, SchemaName]])
 
 /**
   * $synthetic
@@ -147,14 +146,14 @@ object ObjectSchema {
 /**
   * $synthetic
   * */
-final case class Property(name: SchemaName, schema: Reference.Able[Schema])
+final case class Property(name: SchemaName, schema: RefOrSchema)
 
 /**
   * $synthetic
   * */
 @deriving(Decoder)
 final case class ArraySchema(
-  items: Reference.Able[Schema]
+  items: RefOrSchema
 ) extends Schema
 
 sealed trait PrimitiveSchema[Literal] extends Schema {

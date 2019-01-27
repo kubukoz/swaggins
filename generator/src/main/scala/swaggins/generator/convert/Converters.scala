@@ -18,7 +18,7 @@ trait Converters[F[_]] {
 
   def convertSchemaOrRef(
     schemaName: SchemaName,
-    schemaOrRef: Reference.Able[Schema]
+    schemaOrRef: RefOrSchema
   ): F[ModelWithCompanion]
 }
 
@@ -33,18 +33,18 @@ object Converters {
 class ConvertersImpl[F[_]: Packages.Local: Monad] extends Converters[F] {
   override def convertSchemaOrRef(
     schemaName: SchemaName,
-    schemaOrRef: Reference.Able[Schema]
+    schemaOrRef: RefOrSchema
   ): F[ModelWithCompanion] =
     schemaOrRef match {
-      case Right(schema) =>
+      case RefOrSchema.InlineSchema(schema) =>
         convertSchema(TypeName.parse(schemaName.value), schema)
-      case Left(ref) =>
+      case RefOrSchema.Reference(ref) =>
         val klazz = ScalaModel.finalCaseClass(
           TypeName.parse(schemaName.value),
           NonEmptyList.one(
             ClassField(
               FieldName("value"),
-              refToTypeRef(ref.`$ref`)
+              refToTypeRef(ref)
             )
           ),
           ExtendsClause.empty
@@ -100,13 +100,13 @@ class ConvertersImpl[F[_]: Packages.Local: Monad] extends Converters[F] {
         val schemaz: F[NonEmptyList[ModelWithCompanion]] =
           compositeSchema.schemas.nonEmptyTraverse { schemaOrRef =>
             val derivedWrappedName: S[SchemaName] = schemaOrRef match {
-              case Left(ref) =>
-                SchemaName(refToTypeRef(ref.`$ref`).show).pure[S]
-              case Right(StringSchema(None)) =>
+              case RefOrSchema.Reference(ref) =>
+                SchemaName(refToTypeRef(ref).show).pure[S]
+              case RefOrSchema.InlineSchema(StringSchema(None)) =>
                 SchemaName(Primitive.string.show).pure[S]
-              case Right(NumberSchema(None)) =>
+              case RefOrSchema.InlineSchema(NumberSchema(None)) =>
                 SchemaName(Primitive.double.show).pure[S]
-              case Right(_) =>
+              case RefOrSchema.InlineSchema(_) =>
                 getAndIncSyntheticNumber.map(
                   num => SchemaName(s"Anonymous$$$num")
                 )
@@ -180,13 +180,15 @@ class ConvertersImpl[F[_]: Packages.Local: Monad] extends Converters[F] {
     * */
   private def refSchemaToType(
     name: SchemaName,
-    schema: Reference.Able[Schema]
+    schema: RefOrSchema
   ): F[(TypeReference, Option[ModelWithCompanion])] = {
     schema match {
-      case Left(ref)                 => (refToTypeRef(ref.`$ref`), None).pure[F].widen
-      case Right(NumberSchema(None)) => (Primitive.double, None).pure[F].widen
-      case Right(StringSchema(None)) => (Primitive.string, None).pure[F].widen
-      case Right(StringSchema(Some(values))) =>
+      case RefOrSchema.Reference(ref) => (refToTypeRef(ref), None).pure[F].widen
+      case RefOrSchema.InlineSchema(NumberSchema(None)) =>
+        (Primitive.double, None).pure[F].widen
+      case RefOrSchema.InlineSchema(StringSchema(None)) =>
+        (Primitive.string, None).pure[F].widen
+      case RefOrSchema.InlineSchema(StringSchema(Some(values))) =>
         val enumModel =
           ScalaModel.enumeration(
             TypeName.parse(name.value),
@@ -198,7 +200,7 @@ class ConvertersImpl[F[_]: Packages.Local: Monad] extends Converters[F] {
           .inPackage(OrdinaryType(name.value.toCamelCase))
           .map(_ -> Some(enumModel))
 
-      case Right(ArraySchema(items)) =>
+      case RefOrSchema.InlineSchema(ArraySchema(items)) =>
         refSchemaToType(name, items).map {
           case (childType, childModel) =>
             (TypeReference.listOf(childType), childModel)

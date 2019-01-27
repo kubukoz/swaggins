@@ -7,8 +7,9 @@ import enumeratum._
 import io.circe.generic.extras.semiauto._
 import io.circe.{Decoder, KeyDecoder}
 import swaggins.core.implicits._
-import swaggins.openapi.model.shared.{Reference, Schema}
+import swaggins.openapi.model.shared.RefOrSchema
 import scalaz.{deriving, xderiving}
+
 import scala.util.Try
 
 final case class Paths(paths: NonEmptySet[Path])
@@ -94,4 +95,4 @@ object Content {
 }
 
 @deriving(Decoder)
-final case class MediaType(schema: Option[Reference.Able[Schema]])
+final case class MediaType(schema: Option[RefOrSchema])

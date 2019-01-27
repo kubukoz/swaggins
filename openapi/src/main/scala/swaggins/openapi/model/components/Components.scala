@@ -6,10 +6,10 @@ import cats.kernel.Order
 import scalaz.deriving
 import io.circe.generic.extras.semiauto._
 import io.circe.{Decoder, KeyDecoder}
-import swaggins.openapi.model.shared.{Reference, Schema}
+import swaggins.openapi.model.shared.RefOrSchema
 
 @deriving(Decoder)
-final case class Components(schemas: NonEmptyMap[SchemaName, Reference.Able[Schema]])
+final case class Components(schemas: NonEmptyMap[SchemaName, RefOrSchema])
 
 /**
   * $synthetic
