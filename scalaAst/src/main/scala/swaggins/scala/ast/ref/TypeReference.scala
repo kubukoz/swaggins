@@ -14,11 +14,8 @@ sealed trait TypeReference extends Product with Serializable {
 
 object TypeReference {
 
-  def inPackage[F[_]: Packages.Ask](base: TypeReference): F[TypeReference] =
-    Packages.Ask[F].reader { pkg =>
-      //todo create new leaf type for this?
-      OrdinaryType(show"$pkg.$base")
-    }
+  def byName[F[_]: Packages.Ask](base: TypeName): F[TypeReference] =
+    Packages.Ask[F].reader(QualifiedReference(_, OrdinaryType(base.value)))
 
   implicit val show: Show[TypeReference] = _.show
 
@@ -28,10 +25,15 @@ object TypeReference {
   def optional(elementType: TypeReference): TypeReference =
     AppliedType(scalaOption, List(elementType), Nil)
 
-  def byName(typeName: TypeName): TypeReference = OrdinaryType(typeName.value)
+  val scalaList: TypeReference   = OrdinaryType.apply("_root_.scala.List")
+  val scalaOption: TypeReference = OrdinaryType.apply("_root_.scala.Option")
+  val product: TypeReference     = OrdinaryType.apply("_root_.scala.Product")
 
-  val scalaList: TypeReference   = OrdinaryType("List")
-  val scalaOption: TypeReference = OrdinaryType("Option")
+  val serializable: TypeReference =
+    OrdinaryType.apply("_root_.scala.Serializable")
+  val anyVal: TypeReference = OrdinaryType.apply("_root_.scala.AnyVal")
+  val double: TypeReference = OrdinaryType.apply("_root_.scala.Double")
+  val string: TypeReference = OrdinaryType.apply("_root_.scala.Predef.String")
 }
 
 final case class OrdinaryType(value: String) extends TypeReference {
@@ -62,9 +64,9 @@ final case class AppliedType(applied: TypeReference,
   override def show: String = show"$applied$typeParamListString$paramListString"
 }
 
-object Primitive {
-  val double: TypeReference = OrdinaryType("Double")
-  val string: TypeReference = OrdinaryType("String")
+case class QualifiedReference(pkg: Packages, ref: TypeReference)
+    extends TypeReference {
+  override def show: String = if (pkg.isEmpty) ref.show else show"$pkg.$ref"
 }
 
 @deriving(Order)
@@ -75,4 +77,9 @@ object TypeName {
   //todo rename to "decode" or "fromSchema"
   def parse(value: String): TypeName = TypeName(value.toCamelCase)
   def raw(value: String): TypeName   = TypeName(value)
+}
+
+object PrimitiveNames {
+  val double: TypeName = TypeName.raw("Double")
+  val string: TypeName = TypeName.raw("String")
 }

@@ -2,7 +2,7 @@ package swaggins.scala.ast.model
 
 import cats.data.{NonEmptyList, NonEmptySet}
 import cats.implicits._
-import cats.{Order, Show}
+import cats.{Functor, Order, Show}
 import monocle._
 import scalaz.deriving
 import swaggins.core.implicits._
@@ -10,6 +10,7 @@ import swaggins.scala.ast.model.body._
 import swaggins.scala.ast.model.klass.{ClassField, Constructor, FieldName}
 import swaggins.scala.ast.model.modifiers.{Modifier, Modifiers}
 import swaggins.scala.ast.model.values.ScalaLiteral
+import swaggins.scala.ast.packages.Packages
 import swaggins.scala.ast.ref._
 
 @deriving(Order)
@@ -60,19 +61,11 @@ object ScalaModel {
           Constructor(fields),
           extendsClause)
 
-  def enumeration(
+  def enumeration[F[_]: Packages.Ask: Functor](
     name: TypeName,
     underlyingType: TypeReference,
     values: NonEmptySet[ScalaLiteral]
-  ): ModelWithCompanion = {
-
-    val inhabitantModels: NonEmptySet[ScalaModel] = values.map { str =>
-      ScalaModel.caseObject(
-        str.asTypeName,
-        ExtendsClause.appliedType(TypeReference.byName(name),
-                                  Parameter.fromLiteral(str) :: Nil),
-        Body.empty): ScalaModel
-    }
+  ): F[ModelWithCompanion] = {
 
     /**
       * The base class for enum implementations
@@ -84,15 +77,24 @@ object ScalaModel {
       ExtendsClause.productWithSerializable
     )
 
-    /**
-      * The object with enum implementations
-      * */
-    val obj = SingletonObject(Modifiers.empty,
-                              name,
-                              ExtendsClause.empty,
-                              Body.models(inhabitantModels.toList))
+    TypeReference.byName[F](name).map { tpe =>
+      val inhabitantModels: NonEmptySet[ScalaModel] = values.map { str =>
+        ScalaModel.caseObject(
+          str.asTypeName,
+          ExtendsClause.appliedType(tpe, Parameter.fromLiteral(str) :: Nil),
+          Body.empty)
+      }
 
-    ModelWithCompanion.both(cls, obj)
+      /**
+        * The object with enum implementations
+        * */
+      val obj = SingletonObject(Modifiers.empty,
+                                name,
+                                ExtendsClause.empty,
+                                Body.models(inhabitantModels.toList))
+
+      ModelWithCompanion.both(cls, obj)
+    }
   }
 
   def sealedTraitHierarchy(
@@ -157,10 +159,10 @@ object ExtendsClause {
   val empty: ExtendsClause = ExtendsClause(Nil)
 
   val productWithSerializable = ExtendsClause(
-    List(OrdinaryType("Product"), OrdinaryType("Serializable"))
+    List(TypeReference.product, TypeReference.serializable)
   )
 
-  val anyVal = ExtendsClause(List(OrdinaryType("AnyVal")))
+  val anyVal = ExtendsClause(List(TypeReference.anyVal))
 
   def single(ref: TypeReference): ExtendsClause = apply(List(ref))
 
