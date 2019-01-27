@@ -1,6 +1,6 @@
 package swaggins.generator
 
-import cats.data.{Chain, ReaderT}
+import cats.data.ReaderT
 import cats.effect.IO
 import cats.implicits._
 import org.scalatest.Assertion
@@ -24,7 +24,7 @@ class ScalaModelGeneratorTest extends BaseTest {
             .generate(OpenApiParserTest.expected.full)
             .compile
             .toList
-            .run(Packages(Chain.one(PackageName("models"))))
+            .run(Packages.one(PackageName("models")))
 
         val expected = fileContent("/expected-scala-models.scala")
           .map(GeneratedFile("models.scala", _))
@@ -45,7 +45,7 @@ class ScalaModelGeneratorTest extends BaseTest {
             .generate(OpenApiParserTest.expected.coproducts)
             .compile
             .toList
-            .run(Packages(Chain.one(PackageName("models"))))
+            .run(Packages.one(PackageName("models")))
 
         val expected = fileContent("/expected-coproducts-scala-models.scala")
           .map(GeneratedFile("models.scala", _))

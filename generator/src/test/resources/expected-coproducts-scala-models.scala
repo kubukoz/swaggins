@@ -13,8 +13,8 @@ object Cat {
 
 sealed trait Dog extends _root_.scala.Product with _root_.scala.Serializable
 object Dog {
-  final case class Husky(value: models.Dog.Husky) extends models.Dog
-  final case class York(value: models.Dog.York) extends models.Dog
+  final case class Husky(value: models.Husky) extends models.Dog
+  final case class York(value: models.York) extends models.Dog
   final case class Anonymous$1(name: _root_.scala.Predef.String, age: _root_.scala.Double, gender: _root_.scala.Option[models.Dog.Anonymous$1.Gender]) extends models.Dog
   object Anonymous$1 {
     sealed abstract class Gender(value: _root_.scala.Predef.String) extends _root_.scala.Product with _root_.scala.Serializable
@@ -31,8 +31,8 @@ final case class Husky(woof: _root_.scala.Option[_root_.scala.Predef.String])
 
 sealed trait Pet extends _root_.scala.Product with _root_.scala.Serializable
 object Pet {
-  final case class Cat(value: models.Pet.Cat) extends models.Pet
-  final case class Dog(value: models.Pet.Dog) extends models.Pet
+  final case class Cat(value: models.Cat) extends models.Pet
+  final case class Dog(value: models.Dog) extends models.Pet
 }
 
 sealed trait Strnum extends _root_.scala.Product with _root_.scala.Serializable

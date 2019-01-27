@@ -5,7 +5,7 @@ import cats.implicits._
 import scalaz.{deriving, xderiving}
 import swaggins.core.implicits._
 import swaggins.scala.ast.model.values.ScalaLiteral
-import swaggins.scala.ast.packages.Packages
+import swaggins.scala.ast.packages.{PackageName, Packages}
 
 @deriving(Order)
 sealed trait TypeReference extends Product with Serializable {
@@ -14,8 +14,23 @@ sealed trait TypeReference extends Product with Serializable {
 
 object TypeReference {
 
-  def byName[F[_]: Packages.Ask](base: TypeName): F[TypeReference] =
-    Packages.Ask[F].reader(QualifiedReference(_, OrdinaryType(base.value)))
+  def byName[F[_]: Packages.Ask](base: TypeName): F[TypeReference] = {
+    //todo move this outta here
+    val parentPackageNodeOpt = base match {
+      case Parsed(_)            => None
+      case Anonymous(_, parent) => Some(parent)
+    }
+
+    def getPackage(pkg: Packages): Packages = parentPackageNodeOpt match {
+      case None    => pkg
+      case Some(p) => pkg.append(PackageName(p.show))
+    }
+
+    Packages
+      .Ask[F]
+      .reader(pkg =>
+        QualifiedReference(getPackage(pkg), OrdinaryType(base.show)))
+  }
 
   implicit val show: Show[TypeReference] = _.show
 
@@ -69,13 +84,30 @@ case class QualifiedReference(pkg: Packages, ref: TypeReference)
   override def show: String = if (pkg.isEmpty) ref.show else show"$pkg.$ref"
 }
 
-@xderiving(Show, Order)
-final case class TypeName private (value: String) extends AnyVal
+@deriving(Order)
+sealed trait TypeName extends Product with Serializable {
+
+  final def toPackages: Packages = this match {
+    case Parsed(value) => Packages.one(PackageName(value))
+    case Anonymous(number, parent) =>
+      parent.toPackages.append(PackageName(show"Anonymous$$$number"))
+  }
+}
+
+final case class Parsed(value: String)                    extends TypeName
+final case class Anonymous(number: Int, parent: TypeName) extends TypeName
 
 object TypeName {
+  implicit val show: Show[TypeName] = {
+    case Parsed(value)        => value
+    case Anonymous(number, _) => show"Anonymous$$$number"
+  }
   //todo rename to "decode" or "fromSchema"
-  def parse(value: String): TypeName = TypeName(value.toCamelCase)
-  def raw(value: String): TypeName   = TypeName(value)
+  def parse(value: String): TypeName = Parsed(value.toCamelCase)
+  def raw(value: String): TypeName   = Parsed(value)
+
+  def anonymous(number: Int, parent: TypeName): TypeName =
+    Anonymous(number, parent)
 }
 
 object PrimitiveNames {

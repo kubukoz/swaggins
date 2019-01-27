@@ -121,16 +121,12 @@ object Converters {
                 PrimitiveNames.double.pure[S]
               case RefOrSchema.InlineSchema(_) =>
                 getAndIncSyntheticNumber.map(
-                  num => TypeName.raw(s"Anonymous$$$num")
+                  TypeName.anonymous(_, compositeName)
                 )
             }
 
             derivedWrappedName.flatMapF { name =>
-              Packages
-                .Local[F]
-                .local(_.append(PackageName(compositeName.value))) {
-                  generateSchemasForRef[F](name, schemaOrRef)
-                }
+              generateSchemasForRef[F](name, schemaOrRef)
             }
           }.runA(1)
 
@@ -216,7 +212,7 @@ object Converters {
             values.map(ScalaLiteral.string(_))
           )
 
-        Packages.Local[F].local(_.append(PackageName(targetClass.value))) {
+        Packages.Local[F].local(_.concat(targetClass.toPackages)) {
           (
             TypeReference.byName(TypeName.parse(name.value)),
             enumModel.map(_.some)

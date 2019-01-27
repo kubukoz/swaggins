@@ -14,7 +14,8 @@ final case class PackageName(value: String) extends AnyVal
 @xderiving(Order)
 final case class Packages(value: Chain[PackageName]) extends AnyVal {
   def append(pkg: PackageName): Packages = copy(value append pkg)
-  def isEmpty: Boolean = value.isEmpty
+  def concat(pkgs: Packages): Packages   = copy(value concat pkgs.value)
+  def isEmpty: Boolean                   = value.isEmpty
 }
 
 object Packages {
@@ -26,5 +27,6 @@ object Packages {
   type Local[F[_]] = ApplicativeLocal[F, Packages]
   def Local[F[_]](implicit F: Local[F]): Local[F] = F
 
-  val empty: Packages = Packages(Chain.empty)
+  val empty: Packages                  = Packages(Chain.empty)
+  def one(name: PackageName): Packages = Packages(Chain.one(name))
 }
