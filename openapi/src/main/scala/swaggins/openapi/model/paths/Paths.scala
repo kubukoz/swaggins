@@ -4,15 +4,15 @@ import cats.data.{NonEmptyMap, NonEmptySet}
 import cats.implicits._
 import cats.kernel.Order
 import enumeratum._
-import io.circe.generic.JsonCodec
 import io.circe.generic.extras.semiauto._
 import io.circe.{Decoder, KeyDecoder}
 import swaggins.core.implicits._
-import swaggins.openapi.model.shared.{Reference, Schema}
+import swaggins.openapi.model.shared.RefOrSchema
+import scalaz.{deriving, xderiving}
 
 import scala.util.Try
 
-case class Paths(paths: NonEmptySet[Path])
+final case class Paths(paths: NonEmptySet[Path])
 
 object Paths {
   implicit val decoder: Decoder[Paths] =
@@ -26,14 +26,14 @@ object Paths {
 /**
   * $synthetic
   * */
-@JsonCodec(decodeOnly = true)
-case class Path(path: String, item: PathItem)
+@deriving(Decoder)
+final case class Path(path: String, item: PathItem)
 
 object Path {
   implicit val order: Order[Path] = Order.by(o => (o.path, o.item))
 }
 
-case class PathItem(value: NonEmptyMap[HttpMethod, Operation]) extends AnyVal {
+final case class PathItem(value: NonEmptyMap[HttpMethod, Operation]) extends AnyVal {
   def get: Option[Operation] = value.lookup(HttpMethod.Get)
 }
 
@@ -59,19 +59,20 @@ object HttpMethod extends Enum[HttpMethod] {
   implicit val order: Order[HttpMethod] = Order.by(indexOf)
 }
 
-@JsonCodec(decodeOnly = true)
-case class Operation(responses: Responses)
+@deriving(Decoder)
+final case class Operation(responses: Responses)
 
-case class Responses(value: NonEmptyMap[StatusCode, Response]) extends AnyVal
+@xderiving(Decoder)
+final case class Responses(value: NonEmptyMap[StatusCode, Response]) extends AnyVal
 
 object Responses {
-  implicit val decoder: Decoder[Responses] = deriveUnwrappedDecoder
+//   //empty companion object to fix xderiving 
 }
 
 /**
   * $synthetic
   * */
-case class StatusCode(value: Int) extends AnyVal
+final case class StatusCode(value: Int) extends AnyVal
 
 object StatusCode {
   implicit val order: Order[StatusCode] = Order.by(_.value)
@@ -80,18 +81,18 @@ object StatusCode {
   }
 }
 
-@JsonCodec(decodeOnly = true)
-case class Response(content: Option[Content])
+@deriving(Decoder)
+final case class Response(content: Option[Content])
 
 /**
   * $synthetic
   * */
-case class Content(json: MediaType) extends AnyVal
+final case class Content(json: MediaType) extends AnyVal
 
 object Content {
   implicit val decoder: Decoder[Content] =
     Decoder[MediaType].prepare(_.downField("application/json")).map(apply)
 }
 
-@JsonCodec(decodeOnly = true)
-case class MediaType(schema: Option[Reference.Able[Schema]])
+@deriving(Decoder)
+final case class MediaType(schema: Option[RefOrSchema])

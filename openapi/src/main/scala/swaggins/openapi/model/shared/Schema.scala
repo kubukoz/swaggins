@@ -5,11 +5,9 @@ import cats.data.{NonEmptyList, NonEmptyMap, NonEmptySet}
 import cats.implicits._
 import enumeratum._
 import io.circe._
-import io.circe.generic.JsonCodec
 import swaggins.core.implicits._
 import swaggins.openapi.model.components.SchemaName
-import swaggins.openapi.model.shared.Reference.Able
-
+import scalaz.deriving
 import scala.collection.immutable
 
 sealed trait Schema extends Product with Serializable
@@ -32,9 +30,9 @@ object Schema {
   }
 }
 
-case class CompositeSchema(schemas: NonEmptyList[Reference.Able[Schema]],
-                           kind: CompositeSchemaKind,
-                           discriminator: Option[Discriminator])
+final case class CompositeSchema(schemas: NonEmptyList[RefOrSchema],
+                                 kind: CompositeSchemaKind,
+                                 discriminator: Option[Discriminator])
     extends Schema
 
 object CompositeSchema {
@@ -59,8 +57,8 @@ object CompositeSchema {
       CompositeSchemaKind.namesToValuesMap
 
     def schemasDecoder(
-      kind: CompositeSchemaKind): Decoder[NonEmptyList[Able[Schema]]] =
-      Decoder[NonEmptyList[Able[Schema]]].prepare(_.downField(kind.entryName))
+      kind: CompositeSchemaKind): Decoder[NonEmptyList[RefOrSchema]] =
+      Decoder[NonEmptyList[RefOrSchema]].prepare(_.downField(kind.entryName))
 
     def findKind(obj: JsonObject): Either[String, CompositeSchemaKind] = {
       import util._
@@ -86,9 +84,9 @@ object CompositeSchema {
   }
 }
 
-@JsonCodec(decodeOnly = true)
-case class Discriminator(propertyName: Option[SchemaName],
-                         mapping: Option[NonEmptyMap[String, SchemaName]])
+@deriving(Decoder)
+final case class Discriminator(propertyName: Option[SchemaName],
+                               mapping: Option[NonEmptyMap[String, SchemaName]])
 
 /**
   * $synthetic
@@ -108,8 +106,8 @@ object CompositeSchemaKind extends Enum[CompositeSchemaKind] {
 /**
   * $synthetic
   * */
-@JsonCodec(decodeOnly = true)
-case class ObjectSchema(
+@deriving(Decoder)
+final case class ObjectSchema(
   required: Option[NonEmptySet[SchemaName]],
   properties: NonEmptyList[Property]
 ) extends Schema
@@ -148,14 +146,14 @@ object ObjectSchema {
 /**
   * $synthetic
   * */
-case class Property(name: SchemaName, schema: Reference.Able[Schema])
+final case class Property(name: SchemaName, schema: RefOrSchema)
 
 /**
   * $synthetic
   * */
-@JsonCodec(decodeOnly = true)
-case class ArraySchema(
-  items: Reference.Able[Schema]
+@deriving(Decoder)
+final case class ArraySchema(
+  items: RefOrSchema
 ) extends Schema
 
 sealed trait PrimitiveSchema[Literal] extends Schema {
@@ -165,15 +163,15 @@ sealed trait PrimitiveSchema[Literal] extends Schema {
 /**
   * $synthetic
   * */
-@JsonCodec(decodeOnly = true)
-case class NumberSchema(enum: Option[NonEmptySet[Double]])
+@deriving(Decoder)
+final case class NumberSchema(enum: Option[NonEmptySet[Double]])
     extends PrimitiveSchema[Double]
 
 /**
   * $synthetic
   * */
-@JsonCodec(decodeOnly = true)
-case class StringSchema(enum: Option[NonEmptySet[String]])
+@deriving(Decoder)
+final case class StringSchema(enum: Option[NonEmptySet[String]])
     extends PrimitiveSchema[String]
 
 /**

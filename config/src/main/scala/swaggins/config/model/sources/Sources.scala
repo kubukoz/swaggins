@@ -8,7 +8,7 @@ import swaggins.config.model.shared.SourceIdentifier
 
 import scala.collection.immutable
 
-case class Sources(
+final case class Sources(
   value: NonEmptyMap[SourceIdentifier, NonEmptyList[SourceUri]])
     extends AnyVal
 
@@ -16,7 +16,7 @@ object Sources {
   implicit val decoder: Decoder[Sources] = deriveUnwrappedDecoder
 }
 
-case class SourceUri(scheme: SourceScheme, path: String)
+final case class SourceUri(scheme: SourceScheme, path: String)
 
 sealed abstract class SourceScheme(name: String)
     extends EnumEntry

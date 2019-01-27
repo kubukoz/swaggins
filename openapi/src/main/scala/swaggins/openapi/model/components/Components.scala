@@ -3,18 +3,18 @@ package swaggins.openapi.model.components
 import cats.data.NonEmptyMap
 import cats.implicits._
 import cats.kernel.Order
-import io.circe.generic.JsonCodec
+import scalaz.deriving
 import io.circe.generic.extras.semiauto._
 import io.circe.{Decoder, KeyDecoder}
-import swaggins.openapi.model.shared.{Reference, Schema}
+import swaggins.openapi.model.shared.RefOrSchema
 
-@JsonCodec(decodeOnly = true)
-case class Components(schemas: NonEmptyMap[SchemaName, Reference.Able[Schema]])
+@deriving(Decoder)
+final case class Components(schemas: NonEmptyMap[SchemaName, RefOrSchema])
 
 /**
   * $synthetic
   * */
-case class SchemaName(value: String) extends AnyVal
+final case class SchemaName(value: String) extends AnyVal
 
 object SchemaName {
   implicit val order: Order[SchemaName]     = Order.by(_.value)

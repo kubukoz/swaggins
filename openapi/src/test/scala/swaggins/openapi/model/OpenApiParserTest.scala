@@ -40,8 +40,8 @@ class OpenApiParserTest extends BaseTest {
 
 object OpenApiParserTest {
 
-  def componentRef(name: String): Reference =
-    Reference(ReferenceRef.ComponentRef(SchemaName(name)))
+  def componentRef(name: String): RefOrSchema =
+    RefOrSchema.Reference(ReferenceRef.ComponentRef(SchemaName(name)))
 
   object expected {
 
@@ -60,7 +60,7 @@ object OpenApiParserTest {
 
     val getBalanceOperation = {
       val balanceContent =
-        Content(MediaType(Some(Left(componentRef("account-balances")))))
+        Content(MediaType(Some(componentRef("account-balances"))))
 
       Operation(
         Responses(
@@ -71,10 +71,9 @@ object OpenApiParserTest {
 
     val postTransactionsOperation = Operation(
       Responses(
-        NonEmptyMap.of(
-          StatusCode(200) -> Response(Some(
-            Content(MediaType(Some(Right(NumberSchema(None)))))
-          )))))
+        NonEmptyMap.of(StatusCode(200) -> Response(Some(
+          Content(MediaType(Some(RefOrSchema.InlineSchema(NumberSchema(None)))))
+        )))))
 
     val transactionsPath =
       PathItem(NonEmptyMap.of(Post -> postTransactionsOperation))
@@ -86,19 +85,21 @@ object OpenApiParserTest {
     val balanceNodeSchema = ObjectSchema(
       Some(NonEmptySet.of(SchemaName("id"), SchemaName("name"))),
       NonEmptyList.of(
-        Property(SchemaName("id"), Right(NumberSchema(None))),
-        Property(SchemaName("name"), Right(StringSchema(None))),
-        Property(SchemaName("balance"), Left(componentRef("money")))
+        Property(SchemaName("id"),
+                 RefOrSchema.InlineSchema(NumberSchema(None))),
+        Property(SchemaName("name"),
+                 RefOrSchema.InlineSchema(StringSchema(None))),
+        Property(SchemaName("balance"), componentRef("money"))
       )
     )
 
     val balanceTreeSchema = ObjectSchema(
       Some(NonEmptySet.of(SchemaName("value"), SchemaName("children"))),
       NonEmptyList.of(
-        Property(SchemaName("value"),
-                 Left(componentRef("account-balance-node"))),
+        Property(SchemaName("value"), componentRef("account-balance-node")),
         Property(SchemaName("children"),
-                 Right(ArraySchema(Left(componentRef("account-balance-tree")))))
+                 RefOrSchema.InlineSchema(
+                   ArraySchema(componentRef("account-balance-tree"))))
       )
     )
 
@@ -106,29 +107,34 @@ object OpenApiParserTest {
       Some(NonEmptySet.one(SchemaName("children"))),
       NonEmptyList.of(
         Property(SchemaName("children"),
-                 Right(ArraySchema(Left(componentRef("account-balance-tree")))))
+                 RefOrSchema.InlineSchema(
+                   ArraySchema(componentRef("account-balance-tree"))))
       )
     )
 
     val components = Components(
       NonEmptyMap.of(
-        SchemaName("account-balance-node") -> Right(balanceNodeSchema),
-        SchemaName("account-balance-tree") -> Right(balanceTreeSchema),
-        SchemaName("account-balances")     -> Right(balanceListSchema),
-        SchemaName("money")                -> Right(NumberSchema(None))
+        SchemaName("account-balance-node") -> RefOrSchema.InlineSchema(
+          balanceNodeSchema),
+        SchemaName("account-balance-tree") -> RefOrSchema.InlineSchema(
+          balanceTreeSchema),
+        SchemaName("account-balances") -> RefOrSchema.InlineSchema(
+          balanceListSchema),
+        SchemaName("money") -> RefOrSchema.InlineSchema(NumberSchema(None))
       ))
   }
 
   private object coproductsParts {
 
     val getPetSchema = ArraySchema(
-      Right(
-        CompositeSchema(data.NonEmptyList.of(Left(componentRef("pet")),
-                                             Left(componentRef("strnum"))),
-                        CompositeSchemaKind.AnyOf,
-                        None)))
+      RefOrSchema.InlineSchema(
+        CompositeSchema(
+          data.NonEmptyList.of(componentRef("pet"), componentRef("strnum")),
+          CompositeSchemaKind.AnyOf,
+          None)))
 
-    val petsContent = Content(MediaType(Some(Right(getPetSchema))))
+    val petsContent = Content(
+      MediaType(Some(RefOrSchema.InlineSchema(getPetSchema))))
 
     val getPetOperation = Operation(
       Responses(NonEmptyMap.of(StatusCode(200) -> Response(Some(petsContent)))))
@@ -138,12 +144,13 @@ object OpenApiParserTest {
         Path("/pet", PathItem(NonEmptyMap.of(Get -> getPetOperation)))))
 
     val strNumSchema = CompositeSchema(
-      NonEmptyList.of(Right(StringSchema(None)), Right(NumberSchema(None))),
+      NonEmptyList.of(RefOrSchema.InlineSchema(StringSchema(None)),
+                      RefOrSchema.InlineSchema(NumberSchema(None))),
       CompositeSchemaKind.OneOf,
       None)
 
     val petSchema = CompositeSchema(
-      NonEmptyList.of(Left(componentRef("cat")), Left(componentRef("dog"))),
+      NonEmptyList.of(componentRef("cat"), componentRef("dog")),
       CompositeSchemaKind.OneOf,
       Some(
         Discriminator(Some(SchemaName("petType")),
@@ -156,24 +163,28 @@ object OpenApiParserTest {
     val catSchema = ObjectSchema(
       None,
       NonEmptyList.of(
-        Property(SchemaName("hunting-skill"), Right(huntingSkillSchema))))
+        Property(SchemaName("hunting-skill"),
+                 RefOrSchema.InlineSchema(huntingSkillSchema))))
 
     val anonymousDogSchema = ObjectSchema(
       Some(NonEmptySet.of(SchemaName("name"), SchemaName("age"))),
       NonEmptyList.of(
-        Property(SchemaName("name"), Right(StringSchema(None))),
-        Property(SchemaName("age"), Right(NumberSchema(None))),
+        Property(SchemaName("name"),
+                 RefOrSchema.InlineSchema(StringSchema(None))),
+        Property(SchemaName("age"),
+                 RefOrSchema.InlineSchema(NumberSchema(None))),
         Property(SchemaName("gender"),
-                 Right(StringSchema(Some(NonEmptySet.of("male", "female")))))
+                 RefOrSchema.InlineSchema(
+                   StringSchema(Some(NonEmptySet.of("male", "female")))))
       )
     )
 
     val dogSchema =
       CompositeSchema(
         NonEmptyList.of(
-          Left(componentRef("husky")),
-          Left(componentRef("york")),
-          Right(anonymousDogSchema)
+          componentRef("husky"),
+          componentRef("york"),
+          RefOrSchema.InlineSchema(anonymousDogSchema)
         ),
         CompositeSchemaKind.OneOf,
         Some(Discriminator(Some(SchemaName("dogType")), None))
@@ -182,19 +193,20 @@ object OpenApiParserTest {
     val huskySchema =
       ObjectSchema(None,
                    NonEmptyList.of(
-                     Property(SchemaName("woof"), Right(StringSchema(None)))))
+                     Property(SchemaName("woof"),
+                              RefOrSchema.InlineSchema(StringSchema(None)))))
 
     val yorkSchema = huskySchema
 
     val components = Components(
       NonEmptyMap.of(
-        SchemaName("strnum") -> Right(strNumSchema),
-        SchemaName("pet")    -> Right(petSchema),
-        SchemaName("cat")    -> Right(catSchema),
-        SchemaName("dog2")   -> Left(componentRef("dog")),
-        SchemaName("dog")    -> Right(dogSchema),
-        SchemaName("husky")  -> Right(huskySchema),
-        SchemaName("york")   -> Right(yorkSchema)
+        SchemaName("strnum") -> RefOrSchema.InlineSchema(strNumSchema),
+        SchemaName("pet")    -> RefOrSchema.InlineSchema(petSchema),
+        SchemaName("cat")    -> RefOrSchema.InlineSchema(catSchema),
+        SchemaName("dog2")   -> componentRef("dog"),
+        SchemaName("dog")    -> RefOrSchema.InlineSchema(dogSchema),
+        SchemaName("husky")  -> RefOrSchema.InlineSchema(huskySchema),
+        SchemaName("york")   -> RefOrSchema.InlineSchema(yorkSchema)
       ))
   }
 }

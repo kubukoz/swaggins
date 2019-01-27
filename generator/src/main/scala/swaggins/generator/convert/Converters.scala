@@ -1,71 +1,80 @@
 package swaggins.generator.convert
 
-import cats.data.{NonEmptyList, NonEmptyMap, State}
+import cats.data._
 import cats.implicits._
-import io.scalaland.chimney.Transformer
-import io.scalaland.chimney.dsl._
+import cats.{Applicative, Monad}
+import swaggins.core.implicits._
 import swaggins.openapi.model.components.SchemaName
 import swaggins.openapi.model.shared.ReferenceRef.ComponentRef
 import swaggins.openapi.model.shared._
-import swaggins.scala.ast.model
-import swaggins.scala.ast.model.{Discriminator => _, _}
+import swaggins.scala.ast.model._
+import swaggins.scala.ast.model.body.Body
+import swaggins.scala.ast.model.klass.{ClassField, FieldName}
+import swaggins.scala.ast.model.values.ScalaLiteral
+import swaggins.scala.ast.packages.{PackageName, Packages}
 import swaggins.scala.ast.ref._
 
+trait Converters[F[_]] {
+
+  def convertSchemaOrRef(
+    schemaName: SchemaName,
+    schemaOrRef: RefOrSchema
+  ): F[ModelWithCompanion]
+}
+
 object Converters {
+  def apply[F[_]](implicit F: Converters[F]): Converters[F] = F
 
-  private val refToTypeRef: ReferenceRef => TypeReference = {
-    case ComponentRef(name) => name.transformInto[OrdinaryType]
-  }
+  //todo un-implicify
+  implicit def make[F[_]: Packages.Local: Monad]: Converters[F] =
+    new ConvertersImpl[F]
+}
 
-  def convertSchemaOrRef(schemaName: SchemaName,
-                         schemaOrRef: Reference.Able[Schema]): ScalaModel =
+class ConvertersImpl[F[_]: Packages.Local: Monad] extends Converters[F] {
+  override def convertSchemaOrRef(
+    schemaName: SchemaName,
+    schemaOrRef: RefOrSchema
+  ): F[ModelWithCompanion] =
     schemaOrRef match {
-      case Right(schema) =>
+      case RefOrSchema.InlineSchema(schema) =>
         convertSchema(TypeName.parse(schemaName.value), schema)
-      case Left(ref) =>
-        CaseClass(TypeName.parse(schemaName.value),
-                  NonEmptyList.one(
-                    CaseClassField(required = true,
-                                   FieldName("value"),
-                                   refToTypeRef(ref.`$ref`))),
-                  ExtendsClause.empty)
+      case RefOrSchema.Reference(ref) =>
+        val klazz = ScalaModel.finalCaseClass(
+          TypeName.parse(schemaName.value),
+          NonEmptyList.one(
+            ClassField(
+              FieldName("value"),
+              refToTypeRef(ref)
+            )
+          ),
+          ExtendsClause.empty
+        )
+
+        ModelWithCompanion.justClass(klazz).pure[F]
     }
 
-  private def convertDiscriminator(
-    discriminator: Discriminator): model.Discriminator = {
-    model.Discriminator(
-      discriminator.propertyName.map(_.transformInto[FieldName]),
-      discriminator.mapping.map(_.map(_.transformInto[OrdinaryType])))
+  private val refToTypeRef: ReferenceRef => TypeReference = {
+    case ComponentRef(name) => OrdinaryType(name.value.toCamelCase)
   }
 
   /**
     * Converts an OpenAPI Schema to a Scala model (e.g. a case class or an ADT).
     * */
-  private def convertSchema(typeName: TypeName, schema: Schema): ScalaModel = {
+  private def convertSchema(typeName: TypeName,
+                            schema: Schema): F[ModelWithCompanion] = {
     schema match {
-      case ObjectSchema(required, properties) =>
-        val fieldsWithModels = properties.map { prop =>
-          val isRequired = required.exists(_.apply(prop.name))
-
-          val (tpe, modelOpt) = refSchemaToType(prop.name, prop.schema)
-
-          (CaseClassField(isRequired, prop.name.transformInto[FieldName], tpe),
-           modelOpt)
-        }
-
-        val fields = fieldsWithModels.map(_._1)
-        val models = fieldsWithModels.toList.flatMap(_._2)
-
-        val companion =
-          if (models.isEmpty) None else Some(CompanionObject(models))
-
-        CaseClass(typeName, fields, ExtendsClause.empty, companion)
+      case obj: ObjectSchema =>
+        convertObjectSchema(typeName, obj)
 
       case NumberSchema(None) =>
-        ValueClass(typeName, Primitive.Double)
+        ModelWithCompanion
+          .justClass(ScalaModel.valueClass(typeName, Primitive.double))
+          .pure[F]
 
       case StringSchema(None) =>
-        ValueClass(typeName, Primitive.String)
+        ModelWithCompanion
+          .justClass(ScalaModel.valueClass(typeName, Primitive.string))
+          .pure[F]
 
       case comp: CompositeSchema =>
         convertCompositeSchema(typeName, comp)
@@ -74,57 +83,128 @@ object Converters {
 
   private def convertCompositeSchema(
     compositeName: TypeName,
-    compositeSchema: CompositeSchema): ScalaModel = compositeSchema.kind match {
-    case CompositeSchemaKind.OneOf | CompositeSchemaKind.AnyOf =>
-      type S[A] = State[Int, A]
-
-      val schemaz = compositeSchema.schemas.traverse { schemaOrRef =>
-        val getAndIncSyntheticNumber: S[Int] = State.get[Int] <* State.modify(
-          _ + 1)
-
-        val derivedWrappedName: S[SchemaName] = schemaOrRef match {
-          case Left(ref) => SchemaName(refToTypeRef(ref.`$ref`).show).pure[S]
-          case Right(StringSchema(None)) =>
-            SchemaName(Primitive.String.show).pure[S]
-          case Right(NumberSchema(None)) =>
-            SchemaName(Primitive.Double.show).pure[S]
-          case Right(_) =>
-            getAndIncSyntheticNumber.map(num => SchemaName(s"Anonymous$$$num"))
-        }
-
-        derivedWrappedName.map { derivedName =>
-          convertSchemaOrRef(derivedName, schemaOrRef).setExtendsClause(
-            ExtendsClause(List(OrdinaryType(compositeName.value))))
-        }
-      }
-
-      SealedTraitHierarchy(
-        compositeName,
-        schemaz.runA(1).value,
-        compositeSchema.discriminator.map(convertDiscriminator)
+    compositeSchema: CompositeSchema
+  ): F[ModelWithCompanion] = {
+    val extendCompositeSchemaRoot =
+      ModelWithCompanion.klassExtendsClause.set(
+        ExtendsClause(List(OrdinaryType(compositeName.value.toCamelCase)))
       )
+
+    compositeSchema.kind match {
+      case CompositeSchemaKind.OneOf | CompositeSchemaKind.AnyOf =>
+        type S[A] = StateT[F, Int, A]
+
+        val getAndIncSyntheticNumber: S[Int] = StateT.get[F, Int] <* StateT
+          .modify(_ + 1)
+
+        val schemaz: F[NonEmptyList[ModelWithCompanion]] =
+          compositeSchema.schemas.nonEmptyTraverse { schemaOrRef =>
+            val derivedWrappedName: S[SchemaName] = schemaOrRef match {
+              case RefOrSchema.Reference(ref) =>
+                SchemaName(refToTypeRef(ref).show).pure[S]
+              case RefOrSchema.InlineSchema(StringSchema(None)) =>
+                SchemaName(Primitive.string.show).pure[S]
+              case RefOrSchema.InlineSchema(NumberSchema(None)) =>
+                SchemaName(Primitive.double.show).pure[S]
+              case RefOrSchema.InlineSchema(_) =>
+                getAndIncSyntheticNumber.map(
+                  num => SchemaName(s"Anonymous$$$num")
+                )
+            }
+
+            derivedWrappedName.flatMapF(convertSchemaOrRef(_, schemaOrRef))
+          }.runA(1)
+
+        schemaz.map { leafNodeModels =>
+          ScalaModel.sealedTraitHierarchy(
+            compositeName,
+            leafNodeModels.map(extendCompositeSchemaRoot).flatMap(_.asNel)
+          )
+        }
+    }
   }
 
   /**
-    * Resolves a schema/reference to a type reference and (optionally) a synthetic type.
+    * Generates models for an object schema.
+    * */
+  private def convertObjectSchema(typeName: TypeName,
+                                  schema: ObjectSchema): F[ModelWithCompanion] =
+    Packages.Local.local(_.added(PackageName(typeName.value))) {
+
+      schema.properties.nonEmptyTraverse { prop =>
+        val isRequired = schema.required.exists(_.apply(prop.name))
+        propertyToFieldWithModel(isRequired, prop)
+
+      }.map { fieldsWithModels =>
+        val fields: NonEmptyList[ClassField] = fieldsWithModels.map(_._1)
+
+        val models: Option[NonEmptyList[ModelWithCompanion]] =
+          fieldsWithModels.toList.mapFilter(_._2).toNel
+
+        val companion: Option[ScalaModel] = models.map(
+          models =>
+            ScalaModel.companionObject(
+              typeName,
+              Body.models(models.flatMap(_.asNel).toList)))
+
+        ModelWithCompanion(
+          ScalaModel.finalCaseClass(typeName, fields, ExtendsClause.empty),
+          companion)
+      }
+    }
+
+  /**
+    * Generates a class field and, if the type is anonymous, its definition.
+    * */
+  def propertyToFieldWithModel(
+    isRequired: Boolean,
+    prop: Property): F[(ClassField, Option[ModelWithCompanion])] = {
+
+    refSchemaToType(prop.name, prop.schema).map {
+      case (tpe, modelOpt) =>
+        val checkedType =
+          if (isRequired) tpe else TypeReference.optional(tpe)
+
+        val field =
+          ClassField(FieldName(prop.name.value), checkedType)
+
+        (field, modelOpt)
+    }
+  }
+
+  /**
+    * Resolves a schema name and schema/reference to a type reference
+    * (to be used as a class field) and (possibly) a synthetic type.
+    * If a synthetic type is created, its name is based on the property's name,
+    * and the reference is qualified with the current package scope.
     * */
   private def refSchemaToType(
     name: SchemaName,
-    schema: Reference.Able[Schema]): (TypeReference, Option[ScalaModel]) =
+    schema: RefOrSchema
+  ): F[(TypeReference, Option[ModelWithCompanion])] = {
     schema match {
-      case Left(ref)                 => (refToTypeRef(ref.`$ref`), None)
-      case Right(NumberSchema(None)) => (Primitive.Double, None)
-      case Right(StringSchema(None)) => (Primitive.String, None)
-      case Right(StringSchema(Some(values))) =>
-        val enumModel = Some(
-          Enumerated(TypeName.parse(name.value),
-                     Primitive.String,
-                     values.map(ScalaLiteral.String(_))))
+      case RefOrSchema.Reference(ref) => (refToTypeRef(ref), None).pure[F].widen
+      case RefOrSchema.InlineSchema(NumberSchema(None)) =>
+        (Primitive.double, None).pure[F].widen
+      case RefOrSchema.InlineSchema(StringSchema(None)) =>
+        (Primitive.string, None).pure[F].widen
+      case RefOrSchema.InlineSchema(StringSchema(Some(values))) =>
+        val enumModel =
+          ScalaModel.enumeration(
+            TypeName.parse(name.value),
+            Primitive.string,
+            values.map(ScalaLiteral.string(_))
+          )
 
-        (name.transformInto[OrdinaryType], enumModel)
+        TypeReference
+          .inPackage(OrdinaryType(name.value.toCamelCase))
+          .map(_ -> Some(enumModel))
 
-      case Right(ArraySchema(items)) =>
-        val (childType, childModel) = refSchemaToType(name, items)
-        (ListType(childType), childModel)
+      case RefOrSchema.InlineSchema(ArraySchema(items)) =>
+        refSchemaToType(name, items).map {
+          case (childType, childModel) =>
+            (TypeReference.listOf(childType), childModel)
+        }
     }
+  }
 }
