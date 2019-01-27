@@ -19,7 +19,7 @@ object TypeReference {
   def byName[F[_]: Packages.Ask](base: TypeName): F[TypeReference] = {
     Packages
       .Ask[F]
-      .reader(pkg => QualifiedReference(pkg, OrdinaryType(base.show)))
+      .reader(QualifiedReference(_, OrdinaryType(base.show)))
   }
 
   implicit val show: Show[TypeReference] = _.show
