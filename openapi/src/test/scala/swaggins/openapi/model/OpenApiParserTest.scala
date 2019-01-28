@@ -200,11 +200,11 @@ object OpenApiParserTest {
       None,
       NonEmptyList.of(
         Property(
-          SchemaName("doggo"),
+          PropertyName("doggo"),
           RefOrSchema.InlineSchema(
-            ObjectSchema(Some(NonEmptySet.of(SchemaName("dog"))),
+            ObjectSchema(Some(NonEmptySet.of(PropertyName("dog"))),
                          NonEmptyList.of(
-                           Property(SchemaName("dog"), componentRef("dog")))))
+                           Property(PropertyName("dog"), componentRef("dog")))))
         ))
     )
 
@@ -214,16 +214,16 @@ object OpenApiParserTest {
           ObjectSchema(
             None,
             NonEmptyList.of(
-              Property(SchemaName("name"),
+              Property(PropertyName("name"),
                        RefOrSchema.InlineSchema(StringSchema(None))),
               Property(
-                SchemaName("age"),
+                PropertyName("age"),
                 RefOrSchema.InlineSchema(ObjectSchema(
                   None,
                   NonEmptyList.of(
-                    Property(SchemaName("age"),
+                    Property(PropertyName("age"),
                              RefOrSchema.InlineSchema(NumberSchema(None))),
-                    Property(SchemaName("wellness"),
+                    Property(PropertyName("wellness"),
                              RefOrSchema.InlineSchema(StringSchema(
                                Some(NonEmptySet.of("good", "bad")))))
                   )
