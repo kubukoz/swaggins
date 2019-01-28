@@ -2,25 +2,28 @@ package swaggins.config.model.code
 import cats.Order
 import cats.data.NonEmptyMap
 import io.circe.{Decoder, KeyDecoder}
-import io.circe.generic.extras.semiauto._
 import cats.implicits._
-import scalaz.deriving
+import scalaz.{deriving, xderiving}
 import swaggins.config.model.shared.SourceIdentifier
+import swaggins.core.implicits._
 
+@xderiving(Decoder)
 final case class Code(value: NonEmptyMap[SourceIdentifier, SourceSpecs])
     extends AnyVal
 
 object Code {
-  implicit val decoder: Decoder[Code] = deriveUnwrappedDecoder
+  //empty object for scalaz-deriving
 }
 
+@xderiving(Decoder)
 final case class SourceSpecs(value: NonEmptyMap[SpecIdentifier, SpecGenerators])
     extends AnyVal
 
 object SourceSpecs {
-  implicit val decoder: Decoder[SourceSpecs] = deriveUnwrappedDecoder
+  //empty object for scalaz-deriving
 }
 
+@deriving(Order)
 final case class SpecIdentifier(name: String, version: String)
 
 object SpecIdentifier {
@@ -30,26 +33,18 @@ object SpecIdentifier {
       case _                      => none
     }
   }
-
-  implicit val order: Order[SpecIdentifier] =
-    Order.by(ident => (ident.name, ident.version))
 }
 
+@xderiving(Decoder)
 final case class SpecGenerators(value: NonEmptyMap[GeneratorKey, GeneratorConfig])
     extends AnyVal
 
 object SpecGenerators {
-  implicit val decoder: Decoder[SpecGenerators] = deriveUnwrappedDecoder
+  //empty object for scalaz-deriving
 }
 
+@xderiving(Order, KeyDecoder)
 final case class GeneratorKey(value: String) extends AnyVal
-
-object GeneratorKey {
-  implicit val decoder: KeyDecoder[GeneratorKey] =
-    KeyDecoder.instance(apply(_).some)
-
-  implicit val order: Order[GeneratorKey] = Order.by(_.value)
-}
 
 @deriving(Decoder)
 final case class GeneratorConfig(path: String)

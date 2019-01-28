@@ -3,7 +3,7 @@ package swaggins.scala.ast.model.klass
 import cats.{Order, Show}
 import cats.data.NonEmptyList
 import cats.implicits._
-import scalaz.deriving
+import scalaz.{deriving, xderiving}
 import swaggins.scala.ast.ref.TypeReference
 import swaggins.core.implicits._
 
@@ -30,7 +30,7 @@ object ClassField {
     show"""${field.name}: ${field.tpe}"""
 }
 
-@deriving(Order)
+@xderiving(Order)
 final case class FieldName(value: String) extends AnyVal
 
 object FieldName {

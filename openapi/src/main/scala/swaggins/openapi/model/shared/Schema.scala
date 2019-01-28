@@ -3,11 +3,12 @@ package swaggins.openapi.model.shared
 import cats.Show
 import cats.data.{NonEmptyList, NonEmptyMap, NonEmptySet}
 import cats.implicits._
+import cats.kernel.Order
 import enumeratum._
 import io.circe._
 import swaggins.core.implicits._
-import swaggins.openapi.model.components.SchemaName
-import scalaz.deriving
+import scalaz.{deriving, xderiving}
+
 import scala.collection.immutable
 
 sealed trait Schema extends Product with Serializable
@@ -85,8 +86,8 @@ object CompositeSchema {
 }
 
 @deriving(Decoder)
-final case class Discriminator(propertyName: Option[SchemaName],
-                               mapping: Option[NonEmptyMap[String, SchemaName]])
+final case class Discriminator(propertyName: Option[PropertyName],
+                               mapping: Option[NonEmptyMap[String, PropertyName]])
 
 /**
   * $synthetic
@@ -108,7 +109,7 @@ object CompositeSchemaKind extends Enum[CompositeSchemaKind] {
   * */
 @deriving(Decoder)
 final case class ObjectSchema(
-  required: Option[NonEmptySet[SchemaName]],
+  required: Option[NonEmptySet[PropertyName]],
   properties: NonEmptyList[Property]
 ) extends Schema
 
@@ -143,10 +144,13 @@ object ObjectSchema {
 
 }
 
+@xderiving(KeyDecoder, Decoder, Order)
+final case class PropertyName(value: String) extends AnyVal
+
 /**
   * $synthetic
   * */
-final case class Property(name: SchemaName, schema: RefOrSchema)
+final case class Property(name: PropertyName, schema: RefOrSchema)
 
 /**
   * $synthetic

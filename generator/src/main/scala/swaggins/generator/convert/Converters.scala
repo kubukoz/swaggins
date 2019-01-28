@@ -12,7 +12,6 @@ import swaggins.scala.ast.model.klass.{ClassField, FieldName}
 import swaggins.scala.ast.model.values.ScalaLiteral
 import swaggins.scala.ast.packages.{PackageName, Packages}
 import swaggins.scala.ast.ref._
-import swaggins.core.implicits._
 
 trait Converters[F[_]] {
 
@@ -200,7 +199,7 @@ object Converters {
     * */
   def refSchemaToType[F[_]: Packages.Local: Applicative](
     targetClass: TypeName,
-    name: SchemaName,
+    name: PropertyName,
     schema: RefOrSchema
   ): F[(TypeReference, Option[ModelWithCompanion])] = {
     schema match {

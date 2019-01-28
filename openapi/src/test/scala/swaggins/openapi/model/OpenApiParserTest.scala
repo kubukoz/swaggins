@@ -83,30 +83,30 @@ object OpenApiParserTest {
                      Path("/transactions", transactionsPath)))
 
     val balanceNodeSchema = ObjectSchema(
-      Some(NonEmptySet.of(SchemaName("id"), SchemaName("name"))),
+      Some(NonEmptySet.of(PropertyName("id"), PropertyName("name"))),
       NonEmptyList.of(
-        Property(SchemaName("id"),
+        Property(PropertyName("id"),
                  RefOrSchema.InlineSchema(NumberSchema(None))),
-        Property(SchemaName("name"),
+        Property(PropertyName("name"),
                  RefOrSchema.InlineSchema(StringSchema(None))),
-        Property(SchemaName("balance"), componentRef("money"))
+        Property(PropertyName("balance"), componentRef("money"))
       )
     )
 
     val balanceTreeSchema = ObjectSchema(
-      Some(NonEmptySet.of(SchemaName("value"), SchemaName("children"))),
+      Some(NonEmptySet.of(PropertyName("value"), PropertyName("children"))),
       NonEmptyList.of(
-        Property(SchemaName("value"), componentRef("account-balance-node")),
-        Property(SchemaName("children"),
+        Property(PropertyName("value"), componentRef("account-balance-node")),
+        Property(PropertyName("children"),
                  RefOrSchema.InlineSchema(
                    ArraySchema(componentRef("account-balance-tree"))))
       )
     )
 
     val balanceListSchema = ObjectSchema(
-      Some(NonEmptySet.one(SchemaName("children"))),
+      Some(NonEmptySet.one(PropertyName("children"))),
       NonEmptyList.of(
-        Property(SchemaName("children"),
+        Property(PropertyName("children"),
                  RefOrSchema.InlineSchema(
                    ArraySchema(componentRef("account-balance-tree"))))
       )
@@ -153,8 +153,8 @@ object OpenApiParserTest {
       NonEmptyList.of(componentRef("cat"), componentRef("dog")),
       CompositeSchemaKind.OneOf,
       Some(
-        Discriminator(Some(SchemaName("petType")),
-                      Some(NonEmptyMap.of("cat_type" -> SchemaName("cat")))))
+        Discriminator(Some(PropertyName("petType")),
+                      Some(NonEmptyMap.of("cat_type" -> PropertyName("cat")))))
     )
 
     val huntingSkillSchema = StringSchema(
@@ -163,17 +163,17 @@ object OpenApiParserTest {
     val catSchema = ObjectSchema(
       None,
       NonEmptyList.of(
-        Property(SchemaName("hunting-skill"),
+        Property(PropertyName("hunting-skill"),
                  RefOrSchema.InlineSchema(huntingSkillSchema))))
 
     val anonymousDogSchema = ObjectSchema(
-      Some(NonEmptySet.of(SchemaName("name"), SchemaName("age"))),
+      Some(NonEmptySet.of(PropertyName("name"), PropertyName("age"))),
       NonEmptyList.of(
-        Property(SchemaName("name"),
+        Property(PropertyName("name"),
                  RefOrSchema.InlineSchema(StringSchema(None))),
-        Property(SchemaName("age"),
+        Property(PropertyName("age"),
                  RefOrSchema.InlineSchema(NumberSchema(None))),
-        Property(SchemaName("gender"),
+        Property(PropertyName("gender"),
                  RefOrSchema.InlineSchema(
                    StringSchema(Some(NonEmptySet.of("male", "female")))))
       )
@@ -187,13 +187,13 @@ object OpenApiParserTest {
           RefOrSchema.InlineSchema(anonymousDogSchema)
         ),
         CompositeSchemaKind.OneOf,
-        Some(Discriminator(Some(SchemaName("dogType")), None))
+        Some(Discriminator(Some(PropertyName("dogType")), None))
       )
 
     val huskySchema =
       ObjectSchema(None,
                    NonEmptyList.of(
-                     Property(SchemaName("woof"),
+                     Property(PropertyName("woof"),
                               RefOrSchema.InlineSchema(StringSchema(None)))))
 
     val yorkSchema = huskySchema

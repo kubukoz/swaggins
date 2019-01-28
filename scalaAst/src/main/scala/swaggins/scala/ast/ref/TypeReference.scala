@@ -69,8 +69,7 @@ case class QualifiedReference(pkg: Packages, ref: TypeReference)
   override def show: String = if (pkg.isEmpty) ref.show else show"$pkg.$ref"
 }
 
-@deriving(Order)
-@xderiving(Show)
+@xderiving(Show, Order)
 final case class TypeName private (value: String) extends AnyVal
 
 object TypeName {

@@ -8,7 +8,7 @@ import scalaz.deriving
 @deriving(Order)
 @Lenses
 final case class ModelWithCompanion(klass: ScalaModel,
-                              companion: Option[ScalaModel]) {
+                                    companion: Option[ScalaModel]) {
   def asNel: NonEmptyList[ScalaModel] = NonEmptyList(klass, companion.toList)
 }
 

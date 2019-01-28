@@ -3,17 +3,19 @@ package swaggins.config.model.sources
 import cats.data.{NonEmptyList, NonEmptyMap}
 import enumeratum._
 import io.circe.Decoder
-import io.circe.generic.extras.semiauto._
+import scalaz.xderiving
 import swaggins.config.model.shared.SourceIdentifier
 
 import scala.collection.immutable
+import swaggins.core.implicits._
 
+@xderiving(Decoder)
 final case class Sources(
   value: NonEmptyMap[SourceIdentifier, NonEmptyList[SourceUri]])
     extends AnyVal
 
 object Sources {
-  implicit val decoder: Decoder[Sources] = deriveUnwrappedDecoder
+  //empty object for scalaz-deriving
 }
 
 final case class SourceUri(scheme: SourceScheme, path: String)
@@ -22,12 +24,12 @@ sealed abstract class SourceScheme(name: String)
     extends EnumEntry
     with Product
     with Serializable {
-  override def entryName: String = name
+  override val entryName: String = name
 }
 
 object SourceScheme extends Enum[SourceScheme] {
 
-  override def values: immutable.IndexedSeq[SourceScheme] = findValues
+  override val values: immutable.IndexedSeq[SourceScheme] = findValues
 
   case object Github     extends SourceScheme("gh")
   case object Filesystem extends SourceScheme("fs")
@@ -53,7 +55,6 @@ object SourceUri {
       for {
         (schemeText, path) <- splitByColon(string)
         scheme             <- parseScheme(schemeText)
-
       } yield SourceUri(scheme, path)
     }
   }

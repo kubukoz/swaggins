@@ -5,7 +5,7 @@ trait StringExtensions {
   implicit def string2SwagginsStringOps(s: String): StringOps = new StringOps(s)
 }
 
-class StringOps(private val s: String) extends AnyVal {
+final class StringOps(private val s: String) extends AnyVal {
 
   /**
     * Lowercases the string's head, leaves everything else unchanged

@@ -1,8 +1,9 @@
 package swaggins.scala.ast.model.modifiers
 
 import cats.{Order, Show}
-import scalaz.deriving
+import scalaz.{deriving, xderiving}
 import cats.implicits._
+import swaggins.core.implicits._
 
 @deriving(Order)
 sealed trait Modifier extends Product with Serializable
@@ -21,7 +22,7 @@ object Modifier {
   }
 }
 
-@deriving(Order)
+@xderiving(Order)
 final case class Modifiers(value: List[Modifier]) extends AnyVal
 
 object Modifiers {

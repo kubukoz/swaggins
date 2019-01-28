@@ -5,15 +5,14 @@ import cats.data.Chain
 import cats.implicits._
 import cats.kernel.Order
 import cats.mtl.{ApplicativeAsk, ApplicativeLocal}
-import scalaz.{deriving, xderiving}
+import scalaz.xderiving
 import swaggins.core.implicits._
 
-@xderiving(Show)
-@deriving(Order)
+@xderiving(Show, Order)
 final case class PackageName(value: String) extends AnyVal
 
-@deriving(Order)
-final case class Packages(value: Chain[PackageName]) {
+@xderiving(Order)
+final case class Packages(value: Chain[PackageName]) extends AnyVal {
   def append(pkg: PackageName): Packages = copy(value append pkg)
   def isEmpty: Boolean = value.isEmpty
 }
