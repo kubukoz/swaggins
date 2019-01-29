@@ -7,33 +7,42 @@ import swaggins.core.implicits._
 import swaggins.scala.ast.model.values.ScalaLiteral
 import swaggins.scala.ast.packages.Packages
 
+@xderiving(Order, Show)
+case class TypeName2(value: String) extends AnyVal
+
 @deriving(Order)
-sealed trait TypeReference extends Product with Serializable {
-  def show: String
-}
+case class Typ(name: TypeName2, pkg: Packages)
 
-object TypeReference {
+object Typ {
 
-  def byName[F[_]: Packages.Ask](base: TypeName): F[TypeReference] =
-    Packages.Ask[F].reader(QualifiedReference(_, OrdinaryType(base.value)))
+  def under(name: TypeName2, parent: Typ): Typ =
+    Typ(name, Packages.fromTyp(parent))
 
-  implicit val show: Show[TypeReference] = _.show
-
+  //todo think about these two - types that can be applied can't be used as names (or can they?)
   def listOf(elementType: TypeReference): TypeReference =
     AppliedType(scalaList, List(elementType), Nil)
 
   def optional(elementType: TypeReference): TypeReference =
     AppliedType(scalaOption, List(elementType), Nil)
 
-  val scalaList: TypeReference   = OrdinaryType.apply("_root_.scala.List")
-  val scalaOption: TypeReference = OrdinaryType.apply("_root_.scala.Option")
-  val product: TypeReference     = OrdinaryType.apply("_root_.scala.Product")
+  val scalaList: Typ    = Typ(TypeName2("List"), Packages.rootScala)
+  val scalaOption: Typ  = Typ(TypeName2("Option"), Packages.rootScala)
+  val product: Typ      = Typ(TypeName2("Product"), Packages.rootScala)
+  val serializable: Typ = Typ(TypeName2("Serializable"), Packages.rootScala)
+  val anyVal: Typ       = Typ(TypeName2("AnyVal"), Packages.rootScala)
+  val double: Typ       = Typ(TypeName2("Double"), Packages.rootScala)
+  val string: Typ       = Typ(TypeName2("String"), Packages.rootScalaPredef)
+}
 
-  val serializable: TypeReference =
-    OrdinaryType.apply("_root_.scala.Serializable")
-  val anyVal: TypeReference = OrdinaryType.apply("_root_.scala.AnyVal")
-  val double: TypeReference = OrdinaryType.apply("_root_.scala.Double")
-  val string: TypeReference = OrdinaryType.apply("_root_.scala.Predef.String")
+@xderiving(Order, Show)
+case class TypeReference(value: String)
+
+object TypeReference {
+  def fromType(typ: Typ): TypeReference = {
+    val prefix = if (typ.pkg.isEmpty) "" else typ.pkg.show + "."
+
+    TypeReference(show"$prefix${typ.name}")
+  }
 }
 
 final case class OrdinaryType(value: String) extends TypeReference {
@@ -70,6 +79,7 @@ case class QualifiedReference(pkg: Packages, ref: TypeReference)
 }
 
 @xderiving(Show, Order)
+@deprecated
 final case class TypeName private (value: String) extends AnyVal
 
 object TypeName {
